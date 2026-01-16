@@ -64,3 +64,6 @@ When adding new style options, update these files:
 ### Key Dependencies
 - Android: Material Components (`com.google.android.material:material:1.11.0`)
 - iOS: UIKit with Liquid Glass blur effects (iOS 26+), falls back gracefully on iOS 13+
+
+### References
+- [Material Design 3 Dialogs (Android)](https://github.com/material-components/material-components-android/blob/master/docs/components/Dialog.md) - Official M3 dialog implementation guide
