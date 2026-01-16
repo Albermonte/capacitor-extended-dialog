@@ -16,13 +16,13 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ExtendedDialog {
 
@@ -64,12 +64,34 @@ public class ExtendedDialog {
             }
         }
 
+        // Style title text
+        int titleId = dialog.getContext().getResources().getIdentifier("alertTitle", "id", "android");
+        if (titleId > 0) {
+            TextView titleView = dialog.findViewById(titleId);
+            if (titleView != null) {
+                if (styleOptions.getTitleColor() != null) {
+                    titleView.setTextColor(styleOptions.getTitleColor());
+                }
+                if (styleOptions.getTitleFontSize() != null) {
+                    titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getTitleFontSize());
+                }
+            }
+        }
+
         // Style message text
-        if (styleOptions.getMessageFontSize() != null) {
-            TextView messageView = dialog.findViewById(android.R.id.message);
-            if (messageView != null) {
+        TextView messageView = dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            if (styleOptions.getMessageFontSize() != null) {
                 messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
             }
+            if (styleOptions.getMessageColor() != null) {
+                messageView.setTextColor(styleOptions.getMessageColor());
+            }
+        }
+
+        // Style background
+        if (styleOptions.getBackgroundColor() != null && dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(styleOptions.getBackgroundColor()));
         }
     }
 
@@ -93,8 +115,15 @@ public class ExtendedDialog {
         void onResult(String[] values, boolean cancelled);
     }
 
-    public void showAlert(Activity activity, String title, String message, String buttonTitle,
-                          boolean fullscreen, DialogStyleOptions styleOptions, AlertCallback callback) {
+    public void showAlert(
+        Activity activity,
+        String title,
+        String message,
+        String buttonTitle,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        AlertCallback callback
+    ) {
         if (fullscreen && activity instanceof FragmentActivity) {
             showFullScreenAlert((FragmentActivity) activity, title, message, buttonTitle, styleOptions, callback);
         } else {
@@ -102,8 +131,14 @@ public class ExtendedDialog {
         }
     }
 
-    private void showBasicAlert(Activity activity, String title, String message,
-                                String buttonTitle, DialogStyleOptions styleOptions, AlertCallback callback) {
+    private void showBasicAlert(
+        Activity activity,
+        String title,
+        String message,
+        String buttonTitle,
+        DialogStyleOptions styleOptions,
+        AlertCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
 
@@ -111,9 +146,8 @@ public class ExtendedDialog {
                 builder.setTitle(title);
             }
             builder.setMessage(message);
-            builder.setPositiveButton(buttonTitle != null ? buttonTitle : "OK",
-                (dialog, which) -> callback.onDismiss());
-            builder.setOnCancelListener(dialog -> callback.onDismiss());
+            builder.setPositiveButton(buttonTitle != null ? buttonTitle : "OK", (dialog, which) -> callback.onDismiss());
+            builder.setOnCancelListener((dialog) -> callback.onDismiss());
 
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -121,8 +155,14 @@ public class ExtendedDialog {
         });
     }
 
-    private void showFullScreenAlert(FragmentActivity activity, String title, String message,
-                                     String buttonTitle, DialogStyleOptions styleOptions, AlertCallback callback) {
+    private void showFullScreenAlert(
+        FragmentActivity activity,
+        String title,
+        String message,
+        String buttonTitle,
+        DialogStyleOptions styleOptions,
+        AlertCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             FullScreenDialogFragment fragment = FullScreenDialogFragment.newInstance(
                 FullScreenDialogFragment.DialogType.ALERT,
@@ -140,20 +180,32 @@ public class ExtendedDialog {
         });
     }
 
-    public void showConfirm(Activity activity, String title, String message,
-                           String okButtonTitle, String cancelButtonTitle,
-                           boolean fullscreen, DialogStyleOptions styleOptions, ConfirmCallback callback) {
+    public void showConfirm(
+        Activity activity,
+        String title,
+        String message,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        ConfirmCallback callback
+    ) {
         if (fullscreen && activity instanceof FragmentActivity) {
-            showFullScreenConfirm((FragmentActivity) activity, title, message,
-                okButtonTitle, cancelButtonTitle, styleOptions, callback);
+            showFullScreenConfirm((FragmentActivity) activity, title, message, okButtonTitle, cancelButtonTitle, styleOptions, callback);
         } else {
             showBasicConfirm(activity, title, message, okButtonTitle, cancelButtonTitle, styleOptions, callback);
         }
     }
 
-    private void showBasicConfirm(Activity activity, String title, String message,
-                                  String okButtonTitle, String cancelButtonTitle,
-                                  DialogStyleOptions styleOptions, ConfirmCallback callback) {
+    private void showBasicConfirm(
+        Activity activity,
+        String title,
+        String message,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        ConfirmCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
 
@@ -161,11 +213,11 @@ public class ExtendedDialog {
                 builder.setTitle(title);
             }
             builder.setMessage(message);
-            builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK",
-                (dialog, which) -> callback.onResult(true));
-            builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel",
-                (dialog, which) -> callback.onResult(false));
-            builder.setOnCancelListener(dialog -> callback.onResult(false));
+            builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) -> callback.onResult(true));
+            builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel", (dialog, which) ->
+                callback.onResult(false)
+            );
+            builder.setOnCancelListener((dialog) -> callback.onResult(false));
 
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -173,9 +225,15 @@ public class ExtendedDialog {
         });
     }
 
-    private void showFullScreenConfirm(FragmentActivity activity, String title, String message,
-                                       String okButtonTitle, String cancelButtonTitle,
-                                       DialogStyleOptions styleOptions, ConfirmCallback callback) {
+    private void showFullScreenConfirm(
+        FragmentActivity activity,
+        String title,
+        String message,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        ConfirmCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             FullScreenDialogFragment fragment = FullScreenDialogFragment.newInstance(
                 FullScreenDialogFragment.DialogType.CONFIRM,
@@ -193,23 +251,56 @@ public class ExtendedDialog {
         });
     }
 
-    public void showPrompt(Activity activity, String title, String message,
-                          String okButtonTitle, String cancelButtonTitle,
-                          String inputPlaceholder, String inputText,
-                          boolean fullscreen, DialogStyleOptions styleOptions, PromptCallback callback) {
+    public void showPrompt(
+        Activity activity,
+        String title,
+        String message,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        String inputPlaceholder,
+        String inputText,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        PromptCallback callback
+    ) {
         if (fullscreen && activity instanceof FragmentActivity) {
-            showFullScreenPrompt((FragmentActivity) activity, title, message,
-                okButtonTitle, cancelButtonTitle, inputPlaceholder, inputText, styleOptions, callback);
+            showFullScreenPrompt(
+                (FragmentActivity) activity,
+                title,
+                message,
+                okButtonTitle,
+                cancelButtonTitle,
+                inputPlaceholder,
+                inputText,
+                styleOptions,
+                callback
+            );
         } else {
-            showBasicPrompt(activity, title, message, okButtonTitle, cancelButtonTitle,
-                inputPlaceholder, inputText, styleOptions, callback);
+            showBasicPrompt(
+                activity,
+                title,
+                message,
+                okButtonTitle,
+                cancelButtonTitle,
+                inputPlaceholder,
+                inputText,
+                styleOptions,
+                callback
+            );
         }
     }
 
-    private void showBasicPrompt(Activity activity, String title, String message,
-                                 String okButtonTitle, String cancelButtonTitle,
-                                 String inputPlaceholder, String inputText,
-                                 DialogStyleOptions styleOptions, PromptCallback callback) {
+    private void showBasicPrompt(
+        Activity activity,
+        String title,
+        String message,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        String inputPlaceholder,
+        String inputText,
+        DialogStyleOptions styleOptions,
+        PromptCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             Context themedContext = getThemedContext(activity);
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext);
@@ -236,11 +327,13 @@ public class ExtendedDialog {
             container.addView(input);
             builder.setView(container);
 
-            builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK",
-                (dialog, which) -> callback.onResult(input.getText().toString(), false));
-            builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel",
-                (dialog, which) -> callback.onResult("", true));
-            builder.setOnCancelListener(dialog -> callback.onResult("", true));
+            builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) ->
+                callback.onResult(input.getText().toString(), false)
+            );
+            builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel", (dialog, which) ->
+                callback.onResult("", true)
+            );
+            builder.setOnCancelListener((dialog) -> callback.onResult("", true));
 
             AlertDialog dialog = builder.create();
             dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
@@ -249,10 +342,17 @@ public class ExtendedDialog {
         });
     }
 
-    private void showFullScreenPrompt(FragmentActivity activity, String title, String message,
-                                      String okButtonTitle, String cancelButtonTitle,
-                                      String inputPlaceholder, String inputText,
-                                      DialogStyleOptions styleOptions, PromptCallback callback) {
+    private void showFullScreenPrompt(
+        FragmentActivity activity,
+        String title,
+        String message,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        String inputPlaceholder,
+        String inputText,
+        DialogStyleOptions styleOptions,
+        PromptCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             FullScreenDialogFragment fragment = FullScreenDialogFragment.newInstance(
                 FullScreenDialogFragment.DialogType.PROMPT,
@@ -270,23 +370,56 @@ public class ExtendedDialog {
         });
     }
 
-    public void showSingleSelect(Activity activity, String title, String message,
-                                 JSONArray options, String selectedValue,
-                                 String okButtonTitle, String cancelButtonTitle,
-                                 boolean fullscreen, DialogStyleOptions styleOptions, SingleSelectCallback callback) {
+    public void showSingleSelect(
+        Activity activity,
+        String title,
+        String message,
+        JSONArray options,
+        String selectedValue,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        SingleSelectCallback callback
+    ) {
         if (fullscreen && activity instanceof FragmentActivity) {
-            showFullScreenSingleSelect((FragmentActivity) activity, title, message,
-                options, selectedValue, okButtonTitle, cancelButtonTitle, styleOptions, callback);
+            showFullScreenSingleSelect(
+                (FragmentActivity) activity,
+                title,
+                message,
+                options,
+                selectedValue,
+                okButtonTitle,
+                cancelButtonTitle,
+                styleOptions,
+                callback
+            );
         } else {
-            showBasicSingleSelect(activity, title, message, options, selectedValue,
-                okButtonTitle, cancelButtonTitle, styleOptions, callback);
+            showBasicSingleSelect(
+                activity,
+                title,
+                message,
+                options,
+                selectedValue,
+                okButtonTitle,
+                cancelButtonTitle,
+                styleOptions,
+                callback
+            );
         }
     }
 
-    private void showBasicSingleSelect(Activity activity, String title, String message,
-                                       JSONArray options, String selectedValue,
-                                       String okButtonTitle, String cancelButtonTitle,
-                                       DialogStyleOptions styleOptions, SingleSelectCallback callback) {
+    private void showBasicSingleSelect(
+        Activity activity,
+        String title,
+        String message,
+        JSONArray options,
+        String selectedValue,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        SingleSelectCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             try {
                 List<String> labels = new ArrayList<>();
@@ -304,7 +437,7 @@ public class ExtendedDialog {
                     }
                 }
 
-                final int[] selectedIndex = {checkedItem};
+                final int[] selectedIndex = { checkedItem };
 
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
 
@@ -312,23 +445,19 @@ public class ExtendedDialog {
                     builder.setTitle(title);
                 }
 
-                builder.setSingleChoiceItems(
-                    labels.toArray(new String[0]),
-                    checkedItem,
-                    (dialog, which) -> selectedIndex[0] = which
-                );
+                builder.setSingleChoiceItems(labels.toArray(new String[0]), checkedItem, (dialog, which) -> selectedIndex[0] = which);
 
-                builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK",
-                    (dialog, which) -> {
-                        if (selectedIndex[0] >= 0 && selectedIndex[0] < values.size()) {
-                            callback.onResult(values.get(selectedIndex[0]), false);
-                        } else {
-                            callback.onResult(null, false);
-                        }
-                    });
-                builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel",
-                    (dialog, which) -> callback.onResult(null, true));
-                builder.setOnCancelListener(dialog -> callback.onResult(null, true));
+                builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) -> {
+                    if (selectedIndex[0] >= 0 && selectedIndex[0] < values.size()) {
+                        callback.onResult(values.get(selectedIndex[0]), false);
+                    } else {
+                        callback.onResult(null, false);
+                    }
+                });
+                builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel", (dialog, which) ->
+                    callback.onResult(null, true)
+                );
+                builder.setOnCancelListener((dialog) -> callback.onResult(null, true));
 
                 AlertDialog dialog = builder.create();
                 dialog.show();
@@ -339,10 +468,17 @@ public class ExtendedDialog {
         });
     }
 
-    private void showFullScreenSingleSelect(FragmentActivity activity, String title, String message,
-                                            JSONArray options, String selectedValue,
-                                            String okButtonTitle, String cancelButtonTitle,
-                                            DialogStyleOptions styleOptions, SingleSelectCallback callback) {
+    private void showFullScreenSingleSelect(
+        FragmentActivity activity,
+        String title,
+        String message,
+        JSONArray options,
+        String selectedValue,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        SingleSelectCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             FullScreenDialogFragment fragment = FullScreenDialogFragment.newInstance(
                 FullScreenDialogFragment.DialogType.SINGLE_SELECT,
@@ -360,23 +496,56 @@ public class ExtendedDialog {
         });
     }
 
-    public void showMultiSelect(Activity activity, String title, String message,
-                                JSONArray options, JSONArray selectedValues,
-                                String okButtonTitle, String cancelButtonTitle,
-                                boolean fullscreen, DialogStyleOptions styleOptions, MultiSelectCallback callback) {
+    public void showMultiSelect(
+        Activity activity,
+        String title,
+        String message,
+        JSONArray options,
+        JSONArray selectedValues,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        MultiSelectCallback callback
+    ) {
         if (fullscreen && activity instanceof FragmentActivity) {
-            showFullScreenMultiSelect((FragmentActivity) activity, title, message,
-                options, selectedValues, okButtonTitle, cancelButtonTitle, styleOptions, callback);
+            showFullScreenMultiSelect(
+                (FragmentActivity) activity,
+                title,
+                message,
+                options,
+                selectedValues,
+                okButtonTitle,
+                cancelButtonTitle,
+                styleOptions,
+                callback
+            );
         } else {
-            showBasicMultiSelect(activity, title, message, options, selectedValues,
-                okButtonTitle, cancelButtonTitle, styleOptions, callback);
+            showBasicMultiSelect(
+                activity,
+                title,
+                message,
+                options,
+                selectedValues,
+                okButtonTitle,
+                cancelButtonTitle,
+                styleOptions,
+                callback
+            );
         }
     }
 
-    private void showBasicMultiSelect(Activity activity, String title, String message,
-                                      JSONArray options, JSONArray selectedValues,
-                                      String okButtonTitle, String cancelButtonTitle,
-                                      DialogStyleOptions styleOptions, MultiSelectCallback callback) {
+    private void showBasicMultiSelect(
+        Activity activity,
+        String title,
+        String message,
+        JSONArray options,
+        JSONArray selectedValues,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        MultiSelectCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             try {
                 List<String> labels = new ArrayList<>();
@@ -408,23 +577,21 @@ public class ExtendedDialog {
                     builder.setTitle(title);
                 }
 
-                builder.setMultiChoiceItems(
-                    labels.toArray(new String[0]),
-                    checkedItems,
-                    (dialog, which, isChecked) -> {
-                        if (isChecked) {
-                            resultSet.add(values.get(which));
-                        } else {
-                            resultSet.remove(values.get(which));
-                        }
+                builder.setMultiChoiceItems(labels.toArray(new String[0]), checkedItems, (dialog, which, isChecked) -> {
+                    if (isChecked) {
+                        resultSet.add(values.get(which));
+                    } else {
+                        resultSet.remove(values.get(which));
                     }
-                );
+                });
 
-                builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK",
-                    (dialog, which) -> callback.onResult(resultSet.toArray(new String[0]), false));
-                builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel",
-                    (dialog, which) -> callback.onResult(new String[0], true));
-                builder.setOnCancelListener(dialog -> callback.onResult(new String[0], true));
+                builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) ->
+                    callback.onResult(resultSet.toArray(new String[0]), false)
+                );
+                builder.setNegativeButton(cancelButtonTitle != null ? cancelButtonTitle : "Cancel", (dialog, which) ->
+                    callback.onResult(new String[0], true)
+                );
+                builder.setOnCancelListener((dialog) -> callback.onResult(new String[0], true));
 
                 AlertDialog dialog = builder.create();
                 dialog.show();
@@ -435,10 +602,17 @@ public class ExtendedDialog {
         });
     }
 
-    private void showFullScreenMultiSelect(FragmentActivity activity, String title, String message,
-                                           JSONArray options, JSONArray selectedValues,
-                                           String okButtonTitle, String cancelButtonTitle,
-                                           DialogStyleOptions styleOptions, MultiSelectCallback callback) {
+    private void showFullScreenMultiSelect(
+        FragmentActivity activity,
+        String title,
+        String message,
+        JSONArray options,
+        JSONArray selectedValues,
+        String okButtonTitle,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        MultiSelectCallback callback
+    ) {
         activity.runOnUiThread(() -> {
             String selectedValuesStr = selectedValues != null ? selectedValues.toString() : null;
             FullScreenDialogFragment fragment = FullScreenDialogFragment.newInstance(

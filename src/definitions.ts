@@ -10,6 +10,22 @@ export interface DialogStyleOptions {
    */
   cancelButtonColor?: string;
   /**
+   * Color for the title text (hex format, e.g., "#000000")
+   */
+  titleColor?: string;
+  /**
+   * Color for the message text (hex format, e.g., "#666666")
+   */
+  messageColor?: string;
+  /**
+   * Background color of the dialog (hex format, e.g., "#FFFFFF")
+   */
+  backgroundColor?: string;
+  /**
+   * Font size for the title text in sp/pt (e.g., 20)
+   */
+  titleFontSize?: number;
+  /**
    * Font size for the message text in sp/pt (e.g., 16)
    */
   messageFontSize?: number;

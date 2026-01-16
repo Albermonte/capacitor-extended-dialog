@@ -26,13 +26,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class FullScreenDialogFragment extends DialogFragment {
 
@@ -54,6 +54,10 @@ public class FullScreenDialogFragment extends DialogFragment {
     private static final String ARG_OPTIONS = "options";
     private static final String ARG_BUTTON_COLOR = "buttonColor";
     private static final String ARG_CANCEL_BUTTON_COLOR = "cancelButtonColor";
+    private static final String ARG_TITLE_COLOR = "titleColor";
+    private static final String ARG_MESSAGE_COLOR = "messageColor";
+    private static final String ARG_BACKGROUND_COLOR = "backgroundColor";
+    private static final String ARG_TITLE_FONT_SIZE = "titleFontSize";
     private static final String ARG_MESSAGE_FONT_SIZE = "messageFontSize";
     private static final String ARG_BUTTON_FONT_SIZE = "buttonFontSize";
 
@@ -75,22 +79,21 @@ public class FullScreenDialogFragment extends DialogFragment {
      */
     private Context getThemedContext() {
         if (themedContext == null) {
-            themedContext = new ContextThemeWrapper(requireContext(),
-                com.google.android.material.R.style.Theme_Material3_DayNight_Dialog);
+            themedContext = new ContextThemeWrapper(requireContext(), com.google.android.material.R.style.Theme_Material3_DayNight_Dialog);
         }
         return themedContext;
     }
 
     public static FullScreenDialogFragment newInstance(
-            DialogType type,
-            String title,
-            String message,
-            String okButton,
-            String cancelButton,
-            String inputPlaceholder,
-            String inputText,
-            String optionsJson,
-            DialogStyleOptions styleOptions
+        DialogType type,
+        String title,
+        String message,
+        String okButton,
+        String cancelButton,
+        String inputPlaceholder,
+        String inputText,
+        String optionsJson,
+        DialogStyleOptions styleOptions
     ) {
         FullScreenDialogFragment fragment = new FullScreenDialogFragment();
         Bundle args = new Bundle();
@@ -110,6 +113,18 @@ public class FullScreenDialogFragment extends DialogFragment {
             }
             if (styleOptions.getCancelButtonColor() != null) {
                 args.putInt(ARG_CANCEL_BUTTON_COLOR, styleOptions.getCancelButtonColor());
+            }
+            if (styleOptions.getTitleColor() != null) {
+                args.putInt(ARG_TITLE_COLOR, styleOptions.getTitleColor());
+            }
+            if (styleOptions.getMessageColor() != null) {
+                args.putInt(ARG_MESSAGE_COLOR, styleOptions.getMessageColor());
+            }
+            if (styleOptions.getBackgroundColor() != null) {
+                args.putInt(ARG_BACKGROUND_COLOR, styleOptions.getBackgroundColor());
+            }
+            if (styleOptions.getTitleFontSize() != null) {
+                args.putFloat(ARG_TITLE_FONT_SIZE, styleOptions.getTitleFontSize());
             }
             if (styleOptions.getMessageFontSize() != null) {
                 args.putFloat(ARG_MESSAGE_FONT_SIZE, styleOptions.getMessageFontSize());
@@ -162,18 +177,14 @@ public class FullScreenDialogFragment extends DialogFragment {
         super.onStart();
         Dialog dialog = getDialog();
         if (dialog != null && dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             dialog.getWindow().setWindowAnimations(android.R.style.Animation_Dialog);
         }
     }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Bundle args = getArguments();
         if (args == null) {
             dismiss();
@@ -192,6 +203,10 @@ public class FullScreenDialogFragment extends DialogFragment {
         // Get style options
         Integer buttonColor = args.containsKey(ARG_BUTTON_COLOR) ? args.getInt(ARG_BUTTON_COLOR) : null;
         Integer cancelButtonColor = args.containsKey(ARG_CANCEL_BUTTON_COLOR) ? args.getInt(ARG_CANCEL_BUTTON_COLOR) : null;
+        Integer titleColor = args.containsKey(ARG_TITLE_COLOR) ? args.getInt(ARG_TITLE_COLOR) : null;
+        Integer messageColor = args.containsKey(ARG_MESSAGE_COLOR) ? args.getInt(ARG_MESSAGE_COLOR) : null;
+        Integer backgroundColor = args.containsKey(ARG_BACKGROUND_COLOR) ? args.getInt(ARG_BACKGROUND_COLOR) : null;
+        Float titleFontSize = args.containsKey(ARG_TITLE_FONT_SIZE) ? args.getFloat(ARG_TITLE_FONT_SIZE) : null;
         Float messageFontSize = args.containsKey(ARG_MESSAGE_FONT_SIZE) ? args.getFloat(ARG_MESSAGE_FONT_SIZE) : null;
         Float buttonFontSize = args.containsKey(ARG_BUTTON_FONT_SIZE) ? args.getFloat(ARG_BUTTON_FONT_SIZE) : null;
 
@@ -199,13 +214,23 @@ public class FullScreenDialogFragment extends DialogFragment {
         Context ctx = getThemedContext();
         LinearLayout root = new LinearLayout(ctx);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(getResources().getColor(android.R.color.white, null));
+        if (backgroundColor != null) {
+            root.setBackgroundColor(backgroundColor);
+        } else {
+            root.setBackgroundColor(getResources().getColor(android.R.color.white, null));
+        }
 
         // Create toolbar
         MaterialToolbar toolbar = new MaterialToolbar(ctx);
         toolbar.setTitle(title != null && !title.isEmpty() ? title : "");
+        if (titleColor != null) {
+            toolbar.setTitleTextColor(titleColor);
+        }
+        if (titleFontSize != null) {
+            toolbar.setTitleTextAppearance(ctx, com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
+        }
         toolbar.setNavigationIcon(com.google.android.material.R.drawable.ic_m3_chip_close);
-        toolbar.setNavigationOnClickListener(v -> {
+        toolbar.setNavigationOnClickListener((v) -> {
             handleCancel();
             dismiss();
         });
@@ -214,11 +239,7 @@ public class FullScreenDialogFragment extends DialogFragment {
 
         // Create scroll view for content
         ScrollView scrollView = new ScrollView(ctx);
-        scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            0,
-            1f
-        ));
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         LinearLayout contentLayout = new LinearLayout(ctx);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
@@ -233,6 +254,9 @@ public class FullScreenDialogFragment extends DialogFragment {
                 messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, messageFontSize);
             } else {
                 messageView.setTextSize(16);
+            }
+            if (messageColor != null) {
+                messageView.setTextColor(messageColor);
             }
             LinearLayout.LayoutParams messageParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -267,10 +291,9 @@ public class FullScreenDialogFragment extends DialogFragment {
 
         if (type != DialogType.ALERT) {
             // Cancel button
-            MaterialButton cancelBtn = new MaterialButton(ctx, null,
-                com.google.android.material.R.attr.materialButtonOutlinedStyle);
+            MaterialButton cancelBtn = new MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
             cancelBtn.setText(cancelButton);
-            cancelBtn.setOnClickListener(v -> {
+            cancelBtn.setOnClickListener((v) -> {
                 handleCancel();
                 dismiss();
             });
@@ -296,7 +319,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         // OK button
         MaterialButton okBtn = new MaterialButton(ctx);
         okBtn.setText(okButton);
-        okBtn.setOnClickListener(v -> {
+        okBtn.setOnClickListener((v) -> {
             handleConfirm(type);
             dismiss();
         });
@@ -326,10 +349,7 @@ public class FullScreenDialogFragment extends DialogFragment {
             inputField.setText(text);
             inputField.setSelection(text.length());
         }
-        inputField.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
+        inputField.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         container.addView(inputField);
     }
 

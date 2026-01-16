@@ -18,6 +18,10 @@ public class ExtendedDialogPlugin extends Plugin {
         DialogStyleOptions styleOptions = new DialogStyleOptions();
         styleOptions.setButtonColor(call.getString("buttonColor"));
         styleOptions.setCancelButtonColor(call.getString("cancelButtonColor"));
+        styleOptions.setTitleColor(call.getString("titleColor"));
+        styleOptions.setMessageColor(call.getString("messageColor"));
+        styleOptions.setBackgroundColor(call.getString("backgroundColor"));
+        styleOptions.setTitleFontSize(call.getDouble("titleFontSize"));
         styleOptions.setMessageFontSize(call.getDouble("messageFontSize"));
         styleOptions.setButtonFontSize(call.getDouble("buttonFontSize"));
         return styleOptions;
@@ -37,15 +41,7 @@ public class ExtendedDialogPlugin extends Plugin {
             return;
         }
 
-        implementation.showAlert(
-            getActivity(),
-            title,
-            message,
-            buttonTitle,
-            fullscreen,
-            styleOptions,
-            () -> call.resolve()
-        );
+        implementation.showAlert(getActivity(), title, message, buttonTitle, fullscreen, styleOptions, () -> call.resolve());
     }
 
     @PluginMethod
@@ -63,20 +59,11 @@ public class ExtendedDialogPlugin extends Plugin {
             return;
         }
 
-        implementation.showConfirm(
-            getActivity(),
-            title,
-            message,
-            okButtonTitle,
-            cancelButtonTitle,
-            fullscreen,
-            styleOptions,
-            (value) -> {
-                JSObject result = new JSObject();
-                result.put("value", value);
-                call.resolve(result);
-            }
-        );
+        implementation.showConfirm(getActivity(), title, message, okButtonTitle, cancelButtonTitle, fullscreen, styleOptions, (value) -> {
+            JSObject result = new JSObject();
+            result.put("value", value);
+            call.resolve(result);
+        });
     }
 
     @PluginMethod
@@ -186,9 +173,7 @@ public class ExtendedDialogPlugin extends Plugin {
 
         try {
             JSONArray options = new JSONArray(optionsArray.toString());
-            JSONArray selectedValues = selectedValuesArray != null
-                ? new JSONArray(selectedValuesArray.toString())
-                : null;
+            JSONArray selectedValues = selectedValuesArray != null ? new JSONArray(selectedValuesArray.toString()) : null;
 
             implementation.showMultiSelect(
                 getActivity(),

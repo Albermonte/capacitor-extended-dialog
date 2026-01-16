@@ -38,6 +38,29 @@ All five dialog types (alert, confirm, prompt, singleSelect, multiSelect) suppor
 - `basic` - Standard modal dialog (default)
 - `fullscreen` - Full-screen dialog presentation
 
+### Style Options
+All dialogs accept optional `DialogStyleOptions` for customization:
+- `buttonColor` - OK/primary button color (hex, e.g., "#FF5722")
+- `cancelButtonColor` - Cancel button color (hex)
+- `titleColor` - Title text color (hex)
+- `messageColor` - Message text color (hex)
+- `backgroundColor` - Dialog background color (hex)
+- `titleFontSize` - Title font size in sp/pt
+- `messageFontSize` - Message font size in sp/pt
+- `buttonFontSize` - Button font size in sp/pt
+
+### Key Files for Adding New Options
+When adding new style options, update these files:
+1. `src/definitions.ts` - TypeScript interface
+2. `android/.../DialogStyleOptions.java` - Android model class
+3. `android/.../ExtendedDialogPlugin.java` - Extract option from call
+4. `android/.../ExtendedDialog.java` - Apply to basic dialogs
+5. `android/.../FullScreenDialogFragment.java` - Apply to fullscreen dialogs
+6. `ios/.../ExtendedDialog.swift` - iOS model struct and basic dialogs
+7. `ios/.../ExtendedDialogPlugin.swift` - Extract option from call
+8. `ios/.../FullScreenDialogViewController.swift` - Apply to fullscreen dialogs
+9. `src/web.ts` - Web fallback implementation
+
 ### Key Dependencies
 - Android: Material Components (`com.google.android.material:material:1.11.0`)
 - iOS: UIKit with Liquid Glass blur effects (iOS 26+), falls back gracefully on iOS 13+

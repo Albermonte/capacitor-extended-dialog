@@ -65,8 +65,12 @@ public class FullScreenDialogViewController: UIViewController {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = dialogTitle
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        let fontSize = styleOptions?.titleFontSize ?? 18
+        label.font = .systemFont(ofSize: fontSize, weight: .bold)
         label.textAlignment = .center
+        if let titleColor = styleOptions?.titleColor {
+            label.textColor = titleColor
+        }
         return label
     }()
 
@@ -77,7 +81,7 @@ public class FullScreenDialogViewController: UIViewController {
         label.numberOfLines = 0
         let fontSize = styleOptions?.messageFontSize ?? 16
         label.font = .systemFont(ofSize: fontSize)
-        label.textColor = .secondaryLabel
+        label.textColor = styleOptions?.messageColor ?? .secondaryLabel
         return label
     }()
 
@@ -226,8 +230,12 @@ public class FullScreenDialogViewController: UIViewController {
     // MARK: - Setup
 
     private func setupUI() {
-        // Light gray background like iOS Calendar
-        view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
+        // Apply custom background color or default light gray background like iOS Calendar
+        if let bgColor = styleOptions?.backgroundColor {
+            view.backgroundColor = bgColor
+        } else {
+            view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
+        }
 
         // Add blur background
         view.insertSubview(blurView, at: 0)

@@ -9,17 +9,29 @@ public struct SelectOption {
 public struct DialogStyleOptions {
     var buttonColor: UIColor?
     var cancelButtonColor: UIColor?
+    var titleColor: UIColor?
+    var messageColor: UIColor?
+    var backgroundColor: UIColor?
+    var titleFontSize: CGFloat?
     var messageFontSize: CGFloat?
     var buttonFontSize: CGFloat?
 
     init(
         buttonColor: String? = nil,
         cancelButtonColor: String? = nil,
+        titleColor: String? = nil,
+        messageColor: String? = nil,
+        backgroundColor: String? = nil,
+        titleFontSize: Double? = nil,
         messageFontSize: Double? = nil,
         buttonFontSize: Double? = nil
     ) {
         self.buttonColor = Self.parseColor(buttonColor)
         self.cancelButtonColor = Self.parseColor(cancelButtonColor)
+        self.titleColor = Self.parseColor(titleColor)
+        self.messageColor = Self.parseColor(messageColor)
+        self.backgroundColor = Self.parseColor(backgroundColor)
+        self.titleFontSize = titleFontSize.map { CGFloat($0) }
         self.messageFontSize = messageFontSize.map { CGFloat($0) }
         self.buttonFontSize = buttonFontSize.map { CGFloat($0) }
     }
@@ -52,6 +64,8 @@ public struct DialogStyleOptions {
 
     var hasStyles: Bool {
         return buttonColor != nil || cancelButtonColor != nil ||
+               titleColor != nil || messageColor != nil ||
+               backgroundColor != nil || titleFontSize != nil ||
                messageFontSize != nil || buttonFontSize != nil
     }
 }

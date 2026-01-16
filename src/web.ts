@@ -14,29 +14,20 @@ import type {
   DialogStyleOptions,
 } from './definitions';
 
-export class ExtendedDialogWeb
-  extends WebPlugin
-  implements ExtendedDialogPlugin
-{
+export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin {
   async alert(options: AlertOptions): Promise<void> {
-    const message = options.title
-      ? `${options.title}\n\n${options.message}`
-      : options.message;
+    const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
     window.alert(message);
   }
 
   async confirm(options: ConfirmOptions): Promise<ConfirmResult> {
-    const message = options.title
-      ? `${options.title}\n\n${options.message}`
-      : options.message;
+    const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
     const result = window.confirm(message);
     return { value: result };
   }
 
   async prompt(options: PromptOptions): Promise<PromptResult> {
-    const message = options.title
-      ? `${options.title}\n\n${options.message}`
-      : options.message;
+    const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
     const result = window.prompt(message, options.inputText ?? '');
     return {
       value: result ?? '',
@@ -56,7 +47,8 @@ export class ExtendedDialogWeb
 
       options.options.forEach((option) => {
         const label = document.createElement('label');
-        label.style.cssText = 'display: flex; align-items: center; padding: 12px 0; cursor: pointer; border-bottom: 1px solid #e0e0e0;';
+        label.style.cssText =
+          'display: flex; align-items: center; padding: 12px 0; cursor: pointer; border-bottom: 1px solid #e0e0e0;';
 
         const radio = document.createElement('input');
         radio.type = 'radio';
@@ -88,7 +80,7 @@ export class ExtendedDialogWeb
           this.removeOverlay(overlay);
           resolve({ value: null, cancelled: true });
         },
-        options
+        options,
       );
 
       const okButton = this.createButton(
@@ -98,7 +90,7 @@ export class ExtendedDialogWeb
           this.removeOverlay(overlay);
           resolve({ value: selectedValue, cancelled: false });
         },
-        options
+        options,
       );
 
       buttonContainer.appendChild(cancelButton);
@@ -121,7 +113,8 @@ export class ExtendedDialogWeb
 
       options.options.forEach((option) => {
         const label = document.createElement('label');
-        label.style.cssText = 'display: flex; align-items: center; padding: 12px 0; cursor: pointer; border-bottom: 1px solid #e0e0e0;';
+        label.style.cssText =
+          'display: flex; align-items: center; padding: 12px 0; cursor: pointer; border-bottom: 1px solid #e0e0e0;';
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -156,7 +149,7 @@ export class ExtendedDialogWeb
           this.removeOverlay(overlay);
           resolve({ values: [], cancelled: true });
         },
-        options
+        options,
       );
 
       const okButton = this.createButton(
@@ -166,7 +159,7 @@ export class ExtendedDialogWeb
           this.removeOverlay(overlay);
           resolve({ values: Array.from(selectedValues), cancelled: false });
         },
-        options
+        options,
       );
 
       buttonContainer.appendChild(cancelButton);
@@ -196,8 +189,9 @@ export class ExtendedDialogWeb
 
   private createDialogContainer(title?: string, message?: string, styleOptions?: DialogStyleOptions): HTMLDivElement {
     const dialog = document.createElement('div');
+    const bgColor = styleOptions?.backgroundColor ?? 'white';
     dialog.style.cssText = `
-      background: white;
+      background: ${bgColor};
       border-radius: 16px;
       padding: 24px;
       min-width: 300px;
@@ -210,7 +204,9 @@ export class ExtendedDialogWeb
     if (title) {
       const titleEl = document.createElement('h2');
       titleEl.textContent = title;
-      titleEl.style.cssText = 'margin: 0 0 8px 0; font-size: 20px; font-weight: 600;';
+      const titleFontSize = styleOptions?.titleFontSize ?? 20;
+      const titleColor = styleOptions?.titleColor ?? 'inherit';
+      titleEl.style.cssText = `margin: 0 0 8px 0; font-size: ${titleFontSize}px; font-weight: 600; color: ${titleColor};`;
       dialog.appendChild(titleEl);
     }
 
@@ -218,7 +214,8 @@ export class ExtendedDialogWeb
       const messageEl = document.createElement('p');
       messageEl.textContent = message;
       const messageFontSize = styleOptions?.messageFontSize ?? 14;
-      messageEl.style.cssText = `margin: 0; font-size: ${messageFontSize}px; color: #666;`;
+      const messageColor = styleOptions?.messageColor ?? '#666';
+      messageEl.style.cssText = `margin: 0; font-size: ${messageFontSize}px; color: ${messageColor};`;
       dialog.appendChild(messageEl);
     }
 
@@ -235,7 +232,7 @@ export class ExtendedDialogWeb
     text: string,
     primary: boolean,
     onClick: () => void,
-    styleOptions?: DialogStyleOptions
+    styleOptions?: DialogStyleOptions,
   ): HTMLButtonElement {
     const button = document.createElement('button');
     button.textContent = text;
@@ -249,10 +246,7 @@ export class ExtendedDialogWeb
       font-weight: 500;
       cursor: pointer;
       border: none;
-      ${primary
-        ? `background: ${primaryColor}; color: white;`
-        : `background: transparent; color: ${cancelColor};`
-      }
+      ${primary ? `background: ${primaryColor}; color: white;` : `background: transparent; color: ${cancelColor};`}
     `;
     button.addEventListener('click', onClick);
     return button;

@@ -19,6 +19,10 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         return DialogStyleOptions(
             buttonColor: call.getString("buttonColor"),
             cancelButtonColor: call.getString("cancelButtonColor"),
+            titleColor: call.getString("titleColor"),
+            messageColor: call.getString("messageColor"),
+            backgroundColor: call.getString("backgroundColor"),
+            titleFontSize: call.getDouble("titleFontSize"),
             messageFontSize: call.getDouble("messageFontSize"),
             buttonFontSize: call.getDouble("buttonFontSize")
         )
