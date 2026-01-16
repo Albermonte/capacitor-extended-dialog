@@ -23,6 +23,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.DialogFragment;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -161,7 +164,7 @@ public class FullScreenDialogFragment extends DialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NORMAL, com.google.android.material.R.style.ThemeOverlay_Material3_Dialog);
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.Theme_ExtendedDialog_FullScreen);
     }
 
     @NonNull
@@ -177,8 +180,16 @@ public class FullScreenDialogFragment extends DialogFragment {
         super.onStart();
         Dialog dialog = getDialog();
         if (dialog != null && dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-            dialog.getWindow().setWindowAnimations(android.R.style.Animation_Dialog);
+            Window window = dialog.getWindow();
+            // Set window to fill entire screen
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            window.setWindowAnimations(android.R.style.Animation_Dialog);
+            // Enable edge-to-edge display
+            window.setDecorFitsSystemWindows(false);
+            window.setStatusBarColor(Color.TRANSPARENT);
+            window.setNavigationBarColor(Color.TRANSPARENT);
+            // Remove any background dim that might cause gaps
+            window.setBackgroundDrawableResource(android.R.color.transparent);
         }
     }
 
@@ -217,8 +228,21 @@ public class FullScreenDialogFragment extends DialogFragment {
         if (backgroundColor != null) {
             root.setBackgroundColor(backgroundColor);
         } else {
-            root.setBackgroundColor(getResources().getColor(android.R.color.white, null));
+            // Use Material 3 surface color or fallback to white
+            TypedValue surfaceColor = new TypedValue();
+            if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorSurface, surfaceColor, true)) {
+                root.setBackgroundColor(surfaceColor.data);
+            } else {
+                root.setBackgroundColor(getResources().getColor(android.R.color.white, null));
+            }
         }
+
+        // Handle window insets for edge-to-edge display
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
 
         // Create toolbar
         MaterialToolbar toolbar = new MaterialToolbar(ctx);
@@ -230,6 +254,13 @@ public class FullScreenDialogFragment extends DialogFragment {
             toolbar.setTitleTextAppearance(ctx, com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
         }
         toolbar.setNavigationIcon(com.google.android.material.R.drawable.ic_m3_chip_close);
+
+        // Tint navigation icon for proper visibility in dark/light themes
+        TypedValue colorOnSurface = new TypedValue();
+        if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, colorOnSurface, true)) {
+            toolbar.setNavigationIconTint(colorOnSurface.data);
+        }
+
         toolbar.setNavigationOnClickListener((v) -> {
             handleCancel();
             dismiss();
@@ -243,8 +274,10 @@ public class FullScreenDialogFragment extends DialogFragment {
 
         LinearLayout contentLayout = new LinearLayout(ctx);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        contentLayout.setPadding(padding, padding, padding, padding);
+        float density = getResources().getDisplayMetrics().density;
+        int horizontalPadding = (int) (32 * density);
+        int verticalPadding = (int) (24 * density);
+        contentLayout.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
 
         // Add message
         if (message != null && !message.isEmpty()) {
@@ -262,7 +295,7 @@ public class FullScreenDialogFragment extends DialogFragment {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             );
-            messageParams.bottomMargin = padding;
+            messageParams.bottomMargin = (int) (32 * density);
             messageView.setLayoutParams(messageParams);
             contentLayout.addView(messageView);
         }
@@ -286,7 +319,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         // Create button container
         LinearLayout buttonContainer = new LinearLayout(ctx);
         buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
-        buttonContainer.setPadding(padding, padding / 2, padding, padding);
+        buttonContainer.setPadding(horizontalPadding, verticalPadding / 2, horizontalPadding, verticalPadding);
         buttonContainer.setGravity(android.view.Gravity.END);
 
         if (type != DialogType.ALERT) {
@@ -358,10 +391,13 @@ public class FullScreenDialogFragment extends DialogFragment {
 
         selectedValue = selectedValueArg;
         Context ctx = getThemedContext();
+        float density = getResources().getDisplayMetrics().density;
+        int itemPadding = (int) (20 * density);
 
         try {
             JSONArray options = new JSONArray(optionsJson);
             RadioGroup radioGroup = new RadioGroup(ctx);
+            radioGroup.setPadding(0, itemPadding / 2, 0, 0);
 
             for (int i = 0; i < options.length(); i++) {
                 JSONObject option = options.getJSONObject(i);
@@ -370,8 +406,9 @@ public class FullScreenDialogFragment extends DialogFragment {
 
                 RadioButton radioButton = new RadioButton(ctx);
                 radioButton.setText(label);
+                radioButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                 radioButton.setId(View.generateViewId());
-                radioButton.setPadding(0, 16, 0, 16);
+                radioButton.setPadding((int) (8 * density), itemPadding, 0, itemPadding);
 
                 if (value.equals(selectedValue)) {
                     radioButton.setChecked(true);
@@ -409,6 +446,8 @@ public class FullScreenDialogFragment extends DialogFragment {
         }
 
         Context ctx = getThemedContext();
+        float density = getResources().getDisplayMetrics().density;
+        int itemPadding = (int) (20 * density);
 
         try {
             JSONArray options = new JSONArray(optionsJson);
@@ -420,7 +459,8 @@ public class FullScreenDialogFragment extends DialogFragment {
 
                 CheckBox checkBox = new CheckBox(ctx);
                 checkBox.setText(label);
-                checkBox.setPadding(0, 16, 0, 16);
+                checkBox.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                checkBox.setPadding((int) (8 * density), itemPadding, 0, itemPadding);
                 checkBox.setChecked(selectedValues.contains(value));
 
                 final String finalValue = value;
