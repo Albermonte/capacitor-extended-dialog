@@ -1,29 +1,50 @@
 {
-  "name": "capacitor-app",
-  "version": "1.0.0",
-  "description": "An Amazing Capacitor App",
+  "name": "dialog-demo",
+  "private": true,
+  "version": "0.0.1",
   "type": "module",
-  "keywords": [
-    "capacitor",
-    "mobile"
-  ],
   "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vite",
+    "dev:android": "ionic cap run android --livereload --external --watch",
+    "dev:a": "pnpm run dev:android",
+    "dev:ios": "ionic cap run ios --livereload --external --watch",
+    "dev:i": "pnpm run dev:ios",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "test:e2e": "cypress run",
+    "test:unit": "vitest",
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@capacitor/core": "latest",
-    "@capacitor/camera": "latest",
-    "@capacitor/splash-screen": "latest",
-    "capacitor-extended-dialog": "file:..",
-    "@capacitor/ios": "^6.0.0",
-    "@capacitor/android": "^6.0.0"
+    "@capacitor/android": "8.0.1",
+    "@capacitor/app": "8.0.0",
+    "@capacitor/core": "8.0.1",
+    "@capacitor/haptics": "8.0.0",
+    "@capacitor/ios": "8.0.1",
+    "@capacitor/keyboard": "8.0.0",
+    "@capacitor/status-bar": "8.0.0",
+    "@ionic/vue": "^8.0.0",
+    "@ionic/vue-router": "^8.0.0",
+    "capacitor-extended-dialog": "workspace:*",
+    "ionicons": "^7.0.0",
+    "vue": "^3.3.0",
+    "vue-router": "^4.2.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "latest",
-    "vite": "^5.4.2"
+    "@capacitor/cli": "8.0.1",
+    "@vitejs/plugin-legacy": "^5.0.0",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "@vue/eslint-config-typescript": "^12.0.0",
+    "@vue/test-utils": "^2.3.0",
+    "cypress": "^13.5.0",
+    "eslint": "^8.35.0",
+    "eslint-plugin-vue": "^9.9.0",
+    "jsdom": "^22.1.0",
+    "terser": "^5.4.0",
+    "typescript": "~5.9.0",
+    "vite": "^5.0.0",
+    "vitest": "^0.34.6",
+    "vue-tsc": "^2.1.10"
   },
-  "author": "",
-  "license": "ISC"
+  "description": "An Ionic project"
 }
