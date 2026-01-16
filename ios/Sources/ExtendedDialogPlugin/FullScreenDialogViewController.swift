@@ -30,6 +30,7 @@ public class FullScreenDialogViewController: UIViewController {
     private let options: [SelectOption]?
     private var selectedValue: String?
     private var selectedValues: Set<String>
+    private let focusInput: Bool
     private let styleOptions: DialogStyleOptions?
 
     private var inputTextField: UITextField?
@@ -141,6 +142,7 @@ public class FullScreenDialogViewController: UIViewController {
         options: [SelectOption]?,
         selectedValue: String?,
         selectedValues: [String]?,
+        focusInput: Bool = false,
         styleOptions: DialogStyleOptions? = nil
     ) {
         self.dialogType = dialogType
@@ -153,6 +155,7 @@ public class FullScreenDialogViewController: UIViewController {
         self.options = options
         self.selectedValue = selectedValue
         self.selectedValues = Set(selectedValues ?? [])
+        self.focusInput = focusInput
         self.styleOptions = styleOptions
         super.init(nibName: nil, bundle: nil)
     }
@@ -358,7 +361,9 @@ public class FullScreenDialogViewController: UIViewController {
         textField.font = .systemFont(ofSize: 16)
         textField.backgroundColor = .white
         textField.layer.cornerRadius = 8
-        textField.becomeFirstResponder()
+        if focusInput {
+            textField.becomeFirstResponder()
+        }
         return textField
     }
 

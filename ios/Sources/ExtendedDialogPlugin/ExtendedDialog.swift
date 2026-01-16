@@ -204,19 +204,20 @@ public struct DialogStyleOptions {
         inputPlaceholder: String?,
         inputText: String?,
         fullscreen: Bool,
+        focusInput: Bool = false,
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping PromptCallback
     ) {
         DispatchQueue.main.async {
             if fullscreen {
-                self.showFullScreenPrompt(title: title, message: message, okButtonTitle: okButtonTitle, cancelButtonTitle: cancelButtonTitle, inputPlaceholder: inputPlaceholder, inputText: inputText, styleOptions: styleOptions, callback: callback)
+                self.showFullScreenPrompt(title: title, message: message, okButtonTitle: okButtonTitle, cancelButtonTitle: cancelButtonTitle, inputPlaceholder: inputPlaceholder, inputText: inputText, focusInput: focusInput, styleOptions: styleOptions, callback: callback)
             } else {
-                self.showBasicPrompt(title: title, message: message, okButtonTitle: okButtonTitle, cancelButtonTitle: cancelButtonTitle, inputPlaceholder: inputPlaceholder, inputText: inputText, styleOptions: styleOptions, callback: callback)
+                self.showBasicPrompt(title: title, message: message, okButtonTitle: okButtonTitle, cancelButtonTitle: cancelButtonTitle, inputPlaceholder: inputPlaceholder, inputText: inputText, focusInput: focusInput, styleOptions: styleOptions, callback: callback)
             }
         }
     }
 
-    private func showBasicPrompt(title: String?, message: String, okButtonTitle: String?, cancelButtonTitle: String?, inputPlaceholder: String?, inputText: String?, styleOptions: DialogStyleOptions?, callback: @escaping PromptCallback) {
+    private func showBasicPrompt(title: String?, message: String, okButtonTitle: String?, cancelButtonTitle: String?, inputPlaceholder: String?, inputText: String?, focusInput: Bool, styleOptions: DialogStyleOptions?, callback: @escaping PromptCallback) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
         alert.addTextField { textField in
@@ -244,10 +245,20 @@ public struct DialogStyleOptions {
 
         applyLiquidGlassStyle(to: alert)
         applyMessageStyle(to: alert, styleOptions: styleOptions)
-        presentAlert(alert)
+
+        guard let viewController = getTopViewController() else { return }
+
+        // Configure popover for iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = viewController.view
+            popover.sourceRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+
+        viewController.present(alert, animated: true)
     }
 
-    private func showFullScreenPrompt(title: String?, message: String, okButtonTitle: String?, cancelButtonTitle: String?, inputPlaceholder: String?, inputText: String?, styleOptions: DialogStyleOptions?, callback: @escaping PromptCallback) {
+    private func showFullScreenPrompt(title: String?, message: String, okButtonTitle: String?, cancelButtonTitle: String?, inputPlaceholder: String?, inputText: String?, focusInput: Bool, styleOptions: DialogStyleOptions?, callback: @escaping PromptCallback) {
         let vc = FullScreenDialogViewController(
             dialogType: .prompt,
             dialogTitle: title,
@@ -259,6 +270,7 @@ public struct DialogStyleOptions {
             options: nil,
             selectedValue: nil,
             selectedValues: nil,
+            focusInput: focusInput,
             styleOptions: styleOptions
         )
         vc.promptCallback = callback

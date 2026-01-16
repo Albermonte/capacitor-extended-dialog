@@ -86,6 +86,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let inputText = call.getString("inputText")
         let mode = call.getString("mode") ?? "basic"
         let fullscreen = mode == "fullscreen"
+        let focusInput = call.getBool("focusInput") ?? false
         let styleOptions = extractStyleOptions(call)
 
         implementation.showPrompt(
@@ -96,6 +97,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             inputPlaceholder: inputPlaceholder,
             inputText: inputText,
             fullscreen: fullscreen,
+            focusInput: focusInput,
             styleOptions: styleOptions
         ) { value, cancelled in
             call.resolve([

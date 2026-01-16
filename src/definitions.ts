@@ -55,6 +55,16 @@ export interface PromptOptions extends BaseDialogOptions {
   cancelButtonTitle?: string;
   inputPlaceholder?: string;
   inputText?: string; // pre-filled value
+  /**
+   * Whether to automatically focus the input field and open the keyboard when the dialog appears.
+   *
+   * Note: On iOS, basic (non-fullscreen) dialogs always auto-focus the input field due to
+   * UIAlertController's built-in behavior. This option only takes effect on iOS when using
+   * fullscreen mode (`mode: 'fullscreen'`). On Android and web, this works for all modes.
+   *
+   * @default false
+   */
+  focusInput?: boolean;
 }
 
 export interface SelectOption {

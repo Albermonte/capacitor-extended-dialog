@@ -27,6 +27,8 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
   }
 
   async prompt(options: PromptOptions): Promise<PromptResult> {
+    // Note: focusInput option is ignored on web as window.prompt() handles focus automatically
+    // and does not provide programmatic control over keyboard/focus behavior
     const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
     const result = window.prompt(message, options.inputText ?? '');
     return {

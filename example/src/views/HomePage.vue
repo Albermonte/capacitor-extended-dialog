@@ -102,6 +102,24 @@
             <p>Input with default value</p>
           </ion-label>
         </ion-item>
+        <ion-item button @click="showPromptWithFocus()">
+          <ion-label>
+            <h2>Prompt with Auto-Focus</h2>
+            <p>Keyboard opens automatically</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showPromptWithoutFocus()">
+          <ion-label>
+            <h2>Prompt without Auto-Focus</h2>
+            <p>Keyboard opens on tap only</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showPromptFullscreenWithFocus()">
+          <ion-label>
+            <h2>Fullscreen with Auto-Focus</h2>
+            <p>Fullscreen prompt, keyboard opens automatically</p>
+          </ion-label>
+        </ion-item>
       </ion-list>
 
       <!-- Single Select Section -->
@@ -308,6 +326,53 @@ async function showPromptPrefilled() {
   lastResult.value = {
     type: 'prompt',
     prefilled: 'JohnDoe123',
+    value: result.value,
+    cancelled: result.cancelled
+  };
+}
+
+async function showPromptWithFocus() {
+  const result = await ExtendedDialog.prompt({
+    title: 'Quick Input',
+    message: 'The keyboard should open automatically:',
+    inputPlaceholder: 'Start typing...',
+    focusInput: true
+  });
+  lastResult.value = {
+    type: 'prompt',
+    focusInput: true,
+    value: result.value,
+    cancelled: result.cancelled
+  };
+}
+
+async function showPromptWithoutFocus() {
+  const result = await ExtendedDialog.prompt({
+    title: 'Tap to Type',
+    message: 'The keyboard should NOT open automatically. Tap the input field to start typing:',
+    inputPlaceholder: 'Tap here to type...',
+    focusInput: false
+  });
+  lastResult.value = {
+    type: 'prompt',
+    focusInput: false,
+    value: result.value,
+    cancelled: result.cancelled
+  };
+}
+
+async function showPromptFullscreenWithFocus() {
+  const result = await ExtendedDialog.prompt({
+    title: 'Fullscreen with Focus',
+    message: 'This fullscreen prompt should auto-focus the input and open the keyboard:',
+    inputPlaceholder: 'Start typing...',
+    mode: 'fullscreen',
+    focusInput: true
+  });
+  lastResult.value = {
+    type: 'prompt',
+    mode: 'fullscreen',
+    focusInput: true,
     value: result.value,
     cancelled: result.cancelled
   };

@@ -76,6 +76,7 @@ public class ExtendedDialogPlugin extends Plugin {
         String inputText = call.getString("inputText");
         String mode = call.getString("mode", "basic");
         boolean fullscreen = "fullscreen".equals(mode);
+        boolean focusInput = call.getBoolean("focusInput", false);
         DialogStyleOptions styleOptions = extractStyleOptions(call);
 
         if (message == null) {
@@ -92,6 +93,7 @@ public class ExtendedDialogPlugin extends Plugin {
             inputPlaceholder,
             inputText,
             fullscreen,
+            focusInput,
             styleOptions,
             (value, cancelled) -> {
                 JSObject result = new JSObject();

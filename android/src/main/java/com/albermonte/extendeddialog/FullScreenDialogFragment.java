@@ -55,6 +55,7 @@ public class FullScreenDialogFragment extends DialogFragment {
     private static final String ARG_INPUT_PLACEHOLDER = "inputPlaceholder";
     private static final String ARG_INPUT_TEXT = "inputText";
     private static final String ARG_OPTIONS = "options";
+    private static final String ARG_FOCUS_INPUT = "focusInput";
     private static final String ARG_BUTTON_COLOR = "buttonColor";
     private static final String ARG_CANCEL_BUTTON_COLOR = "cancelButtonColor";
     private static final String ARG_TITLE_COLOR = "titleColor";
@@ -96,6 +97,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         String inputPlaceholder,
         String inputText,
         String optionsJson,
+        boolean focusInput,
         DialogStyleOptions styleOptions
     ) {
         FullScreenDialogFragment fragment = new FullScreenDialogFragment();
@@ -108,6 +110,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         args.putString(ARG_INPUT_PLACEHOLDER, inputPlaceholder);
         args.putString(ARG_INPUT_TEXT, inputText);
         args.putString(ARG_OPTIONS, optionsJson);
+        args.putBoolean(ARG_FOCUS_INPUT, focusInput);
 
         // Store style options
         if (styleOptions != null) {
@@ -210,6 +213,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         String inputPlaceholder = args.getString(ARG_INPUT_PLACEHOLDER);
         String inputText = args.getString(ARG_INPUT_TEXT);
         String optionsJson = args.getString(ARG_OPTIONS);
+        boolean focusInput = args.getBoolean(ARG_FOCUS_INPUT, false);
 
         // Get style options
         Integer buttonColor = args.containsKey(ARG_BUTTON_COLOR) ? args.getInt(ARG_BUTTON_COLOR) : null;
@@ -303,7 +307,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         // Add type-specific content
         switch (type) {
             case PROMPT:
-                addPromptContent(contentLayout, inputPlaceholder, inputText);
+                addPromptContent(contentLayout, inputPlaceholder, inputText, focusInput);
                 break;
             case SINGLE_SELECT:
                 addSingleSelectContent(contentLayout, optionsJson, inputText);
@@ -372,7 +376,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         return root;
     }
 
-    private void addPromptContent(LinearLayout container, String placeholder, String text) {
+    private void addPromptContent(LinearLayout container, String placeholder, String text, boolean focusInput) {
         inputField = new EditText(getThemedContext());
         inputField.setInputType(InputType.TYPE_CLASS_TEXT);
         if (placeholder != null) {
@@ -384,6 +388,20 @@ public class FullScreenDialogFragment extends DialogFragment {
         }
         inputField.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         container.addView(inputField);
+
+        if (focusInput) {
+            inputField.requestFocus();
+            // Show keyboard when dialog is shown
+            inputField.postDelayed(() -> {
+                if (getContext() != null) {
+                    android.view.inputmethod.InputMethodManager imm =
+                        (android.view.inputmethod.InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(inputField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                    }
+                }
+            }, 200);
+        }
     }
 
     private void addSingleSelectContent(LinearLayout container, String optionsJson, String selectedValueArg) {

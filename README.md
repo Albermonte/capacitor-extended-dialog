@@ -127,12 +127,13 @@ multiSelect(options: MultiSelectOptions) => any
 
 #### PromptOptions
 
-| Prop                    | Type                |
-| ----------------------- | ------------------- |
-| **`okButtonTitle`**     | <code>string</code> |
-| **`cancelButtonTitle`** | <code>string</code> |
-| **`inputPlaceholder`**  | <code>string</code> |
-| **`inputText`**         | <code>string</code> |
+| Prop                    | Type                 | Description                                                                                                                                                                                                                                                                                                                                                      | Default            |
+| ----------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **`okButtonTitle`**     | <code>string</code>  |                                                                                                                                                                                                                                                                                                                                                                  |                    |
+| **`cancelButtonTitle`** | <code>string</code>  |                                                                                                                                                                                                                                                                                                                                                                  |                    |
+| **`inputPlaceholder`**  | <code>string</code>  |                                                                                                                                                                                                                                                                                                                                                                  |                    |
+| **`inputText`**         | <code>string</code>  |                                                                                                                                                                                                                                                                                                                                                                  |                    |
+| **`focusInput`**        | <code>boolean</code> | Whether to automatically focus the input field and open the keyboard when the dialog appears. Note: On iOS, basic (non-fullscreen) dialogs always auto-focus the input field due to UIAlertController's built-in behavior. This option only takes effect on iOS when using fullscreen mode (`mode: 'fullscreen'`). On Android and web, this works for all modes. | <code>false</code> |
 
 
 #### PromptResult

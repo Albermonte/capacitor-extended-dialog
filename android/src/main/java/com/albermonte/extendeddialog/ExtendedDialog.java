@@ -173,6 +173,7 @@ public class ExtendedDialog {
                 null,
                 null,
                 null,
+                false,
                 styleOptions
             );
             fragment.setAlertCallback(callback);
@@ -244,6 +245,7 @@ public class ExtendedDialog {
                 null,
                 null,
                 null,
+                false,
                 styleOptions
             );
             fragment.setConfirmCallback(callback);
@@ -260,6 +262,7 @@ public class ExtendedDialog {
         String inputPlaceholder,
         String inputText,
         boolean fullscreen,
+        boolean focusInput,
         DialogStyleOptions styleOptions,
         PromptCallback callback
     ) {
@@ -272,6 +275,7 @@ public class ExtendedDialog {
                 cancelButtonTitle,
                 inputPlaceholder,
                 inputText,
+                focusInput,
                 styleOptions,
                 callback
             );
@@ -284,6 +288,7 @@ public class ExtendedDialog {
                 cancelButtonTitle,
                 inputPlaceholder,
                 inputText,
+                focusInput,
                 styleOptions,
                 callback
             );
@@ -298,6 +303,7 @@ public class ExtendedDialog {
         String cancelButtonTitle,
         String inputPlaceholder,
         String inputText,
+        boolean focusInput,
         DialogStyleOptions styleOptions,
         PromptCallback callback
     ) {
@@ -336,7 +342,12 @@ public class ExtendedDialog {
             builder.setOnCancelListener((dialog) -> callback.onResult("", true));
 
             AlertDialog dialog = builder.create();
-            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            if (focusInput) {
+                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                input.requestFocus();
+            } else {
+                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+            }
             dialog.show();
             applyDialogStyles(dialog, styleOptions);
         });
@@ -350,6 +361,7 @@ public class ExtendedDialog {
         String cancelButtonTitle,
         String inputPlaceholder,
         String inputText,
+        boolean focusInput,
         DialogStyleOptions styleOptions,
         PromptCallback callback
     ) {
@@ -363,6 +375,7 @@ public class ExtendedDialog {
                 inputPlaceholder,
                 inputText,
                 null,
+                focusInput,
                 styleOptions
             );
             fragment.setPromptCallback(callback);
@@ -489,6 +502,7 @@ public class ExtendedDialog {
                 null,
                 selectedValue,
                 options.toString(),
+                false,
                 styleOptions
             );
             fragment.setSingleSelectCallback(callback);
@@ -624,6 +638,7 @@ public class ExtendedDialog {
                 null,
                 selectedValuesStr,
                 options.toString(),
+                false,
                 styleOptions
             );
             fragment.setMultiSelectCallback(callback);
