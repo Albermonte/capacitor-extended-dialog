@@ -245,17 +245,7 @@ public struct DialogStyleOptions {
 
         applyLiquidGlassStyle(to: alert)
         applyMessageStyle(to: alert, styleOptions: styleOptions)
-
-        guard let viewController = getTopViewController() else { return }
-
-        // Configure popover for iPad
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = viewController.view
-            popover.sourceRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-
-        viewController.present(alert, animated: true)
+        presentAlert(alert)
     }
 
     private func showFullScreenPrompt(title: String?, message: String, okButtonTitle: String?, cancelButtonTitle: String?, inputPlaceholder: String?, inputText: String?, focusInput: Bool, styleOptions: DialogStyleOptions?, callback: @escaping PromptCallback) {
@@ -308,8 +298,7 @@ public struct DialogStyleOptions {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
 
         for option in options {
-            let style: UIAlertAction.Style = option.value == selectedValue ? .default : .default
-            let action = UIAlertAction(title: option.label, style: style) { _ in
+            let action = UIAlertAction(title: option.label, style: .default) { _ in
                 callback(option.value, false)
             }
             if option.value == selectedValue {
