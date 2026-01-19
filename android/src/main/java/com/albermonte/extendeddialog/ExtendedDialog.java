@@ -10,12 +10,15 @@ import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentActivity;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,8 +39,12 @@ public class ExtendedDialog {
 
     /**
      * Applies style options to an AlertDialog after it's shown.
+     * When no custom styles are provided, M3 typography is applied by default.
      */
     private void applyDialogStyles(AlertDialog dialog, DialogStyleOptions styleOptions) {
+        // Apply M3 typography defaults first
+        applyM3Typography(dialog);
+
         if (styleOptions == null || !styleOptions.hasStyles()) {
             return;
         }
@@ -46,7 +53,7 @@ public class ExtendedDialog {
         Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (positiveButton != null) {
             if (styleOptions.getButtonColor() != null) {
-                positiveButton.setTextColor(styleOptions.getButtonColor());
+                positiveButton.setTextColor(ColorStateList.valueOf(styleOptions.getButtonColor()));
             }
             if (styleOptions.getButtonFontSize() != null) {
                 positiveButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
@@ -57,7 +64,7 @@ public class ExtendedDialog {
         Button negativeButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
         if (negativeButton != null) {
             if (styleOptions.getCancelButtonColor() != null) {
-                negativeButton.setTextColor(styleOptions.getCancelButtonColor());
+                negativeButton.setTextColor(ColorStateList.valueOf(styleOptions.getCancelButtonColor()));
             }
             if (styleOptions.getButtonFontSize() != null) {
                 negativeButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
@@ -65,16 +72,14 @@ public class ExtendedDialog {
         }
 
         // Style title text
-        int titleId = dialog.getContext().getResources().getIdentifier("alertTitle", "id", "android");
-        if (titleId > 0) {
-            TextView titleView = dialog.findViewById(titleId);
-            if (titleView != null) {
-                if (styleOptions.getTitleColor() != null) {
-                    titleView.setTextColor(styleOptions.getTitleColor());
-                }
-                if (styleOptions.getTitleFontSize() != null) {
-                    titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getTitleFontSize());
-                }
+        // MaterialAlertDialogBuilder uses appcompat's alertTitle, not android's
+        TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+        if (titleView != null) {
+            if (styleOptions.getTitleColor() != null) {
+                titleView.setTextColor(styleOptions.getTitleColor());
+            }
+            if (styleOptions.getTitleFontSize() != null) {
+                titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getTitleFontSize());
             }
         }
 
@@ -92,6 +97,58 @@ public class ExtendedDialog {
         // Style background
         if (styleOptions.getBackgroundColor() != null && dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(styleOptions.getBackgroundColor()));
+        }
+    }
+
+    /**
+     * Applies Material 3 typography and colors to dialog title, message, and buttons.
+     * M3 dialog specs: Title uses onSurface (#1D1B20), Message uses onSurfaceVariant (#49454F),
+     * Buttons use colorPrimary (#6750A4 baseline)
+     */
+    private void applyM3Typography(AlertDialog dialog) {
+        Context ctx = dialog.getContext();
+
+        // Apply M3 HeadlineSmall to title with onSurface color
+        // MaterialAlertDialogBuilder uses appcompat's alertTitle, not android's
+        TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+        if (titleView != null) {
+            TextViewCompat.setTextAppearance(titleView,
+                com.google.android.material.R.style.TextAppearance_Material3_HeadlineSmall);
+            // M3 dialog headline color: onSurface (#1D1B20)
+            TypedValue onSurface = new TypedValue();
+            if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true)) {
+                titleView.setTextColor(onSurface.data);
+            }
+        }
+
+        // Apply M3 BodyMedium to message with onSurfaceVariant color
+        TextView messageView = dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            TextViewCompat.setTextAppearance(messageView,
+                com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            // M3 dialog supporting text color: onSurfaceVariant (#49454F)
+            TypedValue onSurfaceVariant = new TypedValue();
+            if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, onSurfaceVariant, true)) {
+                messageView.setTextColor(onSurfaceVariant.data);
+            }
+        }
+
+        // Apply M3 colorPrimary to dialog buttons
+        // This ensures consistent button colors across all dialogs regardless of app theme
+        TypedValue primaryColor = new TypedValue();
+        if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, primaryColor, true)) {
+            Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+            if (positiveButton != null) {
+                positiveButton.setTextColor(ColorStateList.valueOf(primaryColor.data));
+            }
+            Button negativeButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
+            if (negativeButton != null) {
+                negativeButton.setTextColor(ColorStateList.valueOf(primaryColor.data));
+            }
+            Button neutralButton = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
+            if (neutralButton != null) {
+                neutralButton.setTextColor(ColorStateList.valueOf(primaryColor.data));
+            }
         }
     }
 
@@ -140,7 +197,9 @@ public class ExtendedDialog {
         AlertCallback callback
     ) {
         activity.runOnUiThread(() -> {
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
+            Context themedContext = getThemedContext(activity);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext,
+                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
 
             if (title != null && !title.isEmpty()) {
                 builder.setTitle(title);
@@ -208,7 +267,9 @@ public class ExtendedDialog {
         ConfirmCallback callback
     ) {
         activity.runOnUiThread(() -> {
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
+            Context themedContext = getThemedContext(activity);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext,
+                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
 
             if (title != null && !title.isEmpty()) {
                 builder.setTitle(title);
@@ -309,28 +370,35 @@ public class ExtendedDialog {
     ) {
         activity.runOnUiThread(() -> {
             Context themedContext = getThemedContext(activity);
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext,
+                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
 
             if (title != null && !title.isEmpty()) {
                 builder.setTitle(title);
             }
             builder.setMessage(message);
 
-            final EditText input = new EditText(themedContext);
+            // Use Material 3 TextInputLayout with outlined style
+            TextInputLayout textInputLayout = new TextInputLayout(themedContext, null,
+                com.google.android.material.R.attr.textInputOutlinedStyle);
+            textInputLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+
+            final TextInputEditText input = new TextInputEditText(textInputLayout.getContext());
             input.setInputType(InputType.TYPE_CLASS_TEXT);
             if (inputPlaceholder != null) {
-                input.setHint(inputPlaceholder);
+                textInputLayout.setHint(inputPlaceholder);
             }
             if (inputText != null) {
                 input.setText(inputText);
                 input.setSelection(inputText.length());
             }
+            textInputLayout.addView(input);
 
             LinearLayout container = new LinearLayout(themedContext);
             container.setOrientation(LinearLayout.VERTICAL);
             int padding = (int) (20 * activity.getResources().getDisplayMetrics().density);
-            container.setPadding(padding, 0, padding, 0);
-            container.addView(input);
+            container.setPadding(padding, padding / 2, padding, 0);
+            container.addView(textInputLayout);
             builder.setView(container);
 
             builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) ->
@@ -452,13 +520,18 @@ public class ExtendedDialog {
 
                 final int[] selectedIndex = { checkedItem };
 
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity),
+                    R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
 
                 if (title != null && !title.isEmpty()) {
                     builder.setTitle(title);
                 }
 
-                builder.setSingleChoiceItems(labels.toArray(new String[0]), checkedItem, (dialog, which) -> selectedIndex[0] = which);
+                builder.setSingleChoiceItems(labels.toArray(new String[0]), checkedItem, (dialog, which) -> {
+                    selectedIndex[0] = which;
+                    // M3 guideline: Enable confirming action when a choice is made
+                    ((AlertDialog) dialog).getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(true);
+                });
 
                 builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) -> {
                     if (selectedIndex[0] >= 0 && selectedIndex[0] < values.size()) {
@@ -475,6 +548,11 @@ public class ExtendedDialog {
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 applyDialogStyles(dialog, styleOptions);
+
+                // M3 guideline: Disable confirming action until a choice is made
+                if (checkedItem < 0) {
+                    dialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
+                }
             } catch (JSONException e) {
                 callback.onResult(null, true);
             }
@@ -585,7 +663,8 @@ public class ExtendedDialog {
 
                 final Set<String> resultSet = new HashSet<>(selectedSet);
 
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity));
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity),
+                    R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
 
                 if (title != null && !title.isEmpty()) {
                     builder.setTitle(title);
@@ -597,6 +676,8 @@ public class ExtendedDialog {
                     } else {
                         resultSet.remove(values.get(which));
                     }
+                    // M3 guideline: Enable confirming action when a choice is made
+                    ((AlertDialog) dialog).getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(!resultSet.isEmpty());
                 });
 
                 builder.setPositiveButton(okButtonTitle != null ? okButtonTitle : "OK", (dialog, which) ->
@@ -610,6 +691,11 @@ public class ExtendedDialog {
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 applyDialogStyles(dialog, styleOptions);
+
+                // M3 guideline: Disable confirming action until a choice is made
+                if (resultSet.isEmpty()) {
+                    dialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
+                }
             } catch (JSONException e) {
                 callback.onResult(new String[0], true);
             }

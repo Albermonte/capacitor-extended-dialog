@@ -1,11 +1,21 @@
 package com.albermonte.extendeddialog;
 
 import android.graphics.Color;
+import android.os.Bundle;
 
 /**
  * Style options for dialog customization.
  */
 public class DialogStyleOptions {
+
+    private static final String KEY_BUTTON_COLOR = "buttonColor";
+    private static final String KEY_CANCEL_BUTTON_COLOR = "cancelButtonColor";
+    private static final String KEY_TITLE_COLOR = "titleColor";
+    private static final String KEY_MESSAGE_COLOR = "messageColor";
+    private static final String KEY_BACKGROUND_COLOR = "backgroundColor";
+    private static final String KEY_TITLE_FONT_SIZE = "titleFontSize";
+    private static final String KEY_MESSAGE_FONT_SIZE = "messageFontSize";
+    private static final String KEY_BUTTON_FONT_SIZE = "buttonFontSize";
 
     private Integer buttonColor;
     private Integer cancelButtonColor;
@@ -18,116 +28,72 @@ public class DialogStyleOptions {
 
     public DialogStyleOptions() {}
 
-    public Integer getButtonColor() {
-        return buttonColor;
-    }
-
-    public void setButtonColor(String hexColor) {
-        if (hexColor != null && !hexColor.isEmpty()) {
-            try {
-                this.buttonColor = Color.parseColor(hexColor);
-            } catch (IllegalArgumentException e) {
-                // Invalid color, ignore
-            }
+    private static Integer parseColor(String hexColor) {
+        if (hexColor == null || hexColor.isEmpty()) {
+            return null;
+        }
+        try {
+            return Color.parseColor(hexColor);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
-    public Integer getCancelButtonColor() {
-        return cancelButtonColor;
+    private static Float parseSize(Double size) {
+        return (size != null && size > 0) ? size.floatValue() : null;
     }
 
-    public void setCancelButtonColor(String hexColor) {
-        if (hexColor != null && !hexColor.isEmpty()) {
-            try {
-                this.cancelButtonColor = Color.parseColor(hexColor);
-            } catch (IllegalArgumentException e) {
-                // Invalid color, ignore
-            }
-        }
-    }
+    public Integer getButtonColor() { return buttonColor; }
+    public void setButtonColor(String hexColor) { this.buttonColor = parseColor(hexColor); }
 
-    public Integer getTitleColor() {
-        return titleColor;
-    }
+    public Integer getCancelButtonColor() { return cancelButtonColor; }
+    public void setCancelButtonColor(String hexColor) { this.cancelButtonColor = parseColor(hexColor); }
 
-    public void setTitleColor(String hexColor) {
-        if (hexColor != null && !hexColor.isEmpty()) {
-            try {
-                this.titleColor = Color.parseColor(hexColor);
-            } catch (IllegalArgumentException e) {
-                // Invalid color, ignore
-            }
-        }
-    }
+    public Integer getTitleColor() { return titleColor; }
+    public void setTitleColor(String hexColor) { this.titleColor = parseColor(hexColor); }
 
-    public Integer getMessageColor() {
-        return messageColor;
-    }
+    public Integer getMessageColor() { return messageColor; }
+    public void setMessageColor(String hexColor) { this.messageColor = parseColor(hexColor); }
 
-    public void setMessageColor(String hexColor) {
-        if (hexColor != null && !hexColor.isEmpty()) {
-            try {
-                this.messageColor = Color.parseColor(hexColor);
-            } catch (IllegalArgumentException e) {
-                // Invalid color, ignore
-            }
-        }
-    }
+    public Integer getBackgroundColor() { return backgroundColor; }
+    public void setBackgroundColor(String hexColor) { this.backgroundColor = parseColor(hexColor); }
 
-    public Integer getBackgroundColor() {
-        return backgroundColor;
-    }
+    public Float getTitleFontSize() { return titleFontSize; }
+    public void setTitleFontSize(Double size) { this.titleFontSize = parseSize(size); }
 
-    public void setBackgroundColor(String hexColor) {
-        if (hexColor != null && !hexColor.isEmpty()) {
-            try {
-                this.backgroundColor = Color.parseColor(hexColor);
-            } catch (IllegalArgumentException e) {
-                // Invalid color, ignore
-            }
-        }
-    }
+    public Float getMessageFontSize() { return messageFontSize; }
+    public void setMessageFontSize(Double size) { this.messageFontSize = parseSize(size); }
 
-    public Float getTitleFontSize() {
-        return titleFontSize;
-    }
-
-    public void setTitleFontSize(Double size) {
-        if (size != null && size > 0) {
-            this.titleFontSize = size.floatValue();
-        }
-    }
-
-    public Float getMessageFontSize() {
-        return messageFontSize;
-    }
-
-    public void setMessageFontSize(Double size) {
-        if (size != null && size > 0) {
-            this.messageFontSize = size.floatValue();
-        }
-    }
-
-    public Float getButtonFontSize() {
-        return buttonFontSize;
-    }
-
-    public void setButtonFontSize(Double size) {
-        if (size != null && size > 0) {
-            this.buttonFontSize = size.floatValue();
-        }
-    }
+    public Float getButtonFontSize() { return buttonFontSize; }
+    public void setButtonFontSize(Double size) { this.buttonFontSize = parseSize(size); }
 
     public boolean hasStyles() {
-        return (
-            buttonColor != null ||
-            cancelButtonColor != null ||
-            titleColor != null ||
-            messageColor != null ||
-            backgroundColor != null ||
-            titleFontSize != null ||
-            messageFontSize != null ||
-            buttonFontSize != null
-        );
+        return buttonColor != null || cancelButtonColor != null || titleColor != null ||
+               messageColor != null || backgroundColor != null || titleFontSize != null ||
+               messageFontSize != null || buttonFontSize != null;
+    }
+
+    public void writeToBundle(Bundle bundle) {
+        if (buttonColor != null) bundle.putInt(KEY_BUTTON_COLOR, buttonColor);
+        if (cancelButtonColor != null) bundle.putInt(KEY_CANCEL_BUTTON_COLOR, cancelButtonColor);
+        if (titleColor != null) bundle.putInt(KEY_TITLE_COLOR, titleColor);
+        if (messageColor != null) bundle.putInt(KEY_MESSAGE_COLOR, messageColor);
+        if (backgroundColor != null) bundle.putInt(KEY_BACKGROUND_COLOR, backgroundColor);
+        if (titleFontSize != null) bundle.putFloat(KEY_TITLE_FONT_SIZE, titleFontSize);
+        if (messageFontSize != null) bundle.putFloat(KEY_MESSAGE_FONT_SIZE, messageFontSize);
+        if (buttonFontSize != null) bundle.putFloat(KEY_BUTTON_FONT_SIZE, buttonFontSize);
+    }
+
+    public static DialogStyleOptions readFromBundle(Bundle bundle) {
+        DialogStyleOptions options = new DialogStyleOptions();
+        options.buttonColor = bundle.containsKey(KEY_BUTTON_COLOR) ? bundle.getInt(KEY_BUTTON_COLOR) : null;
+        options.cancelButtonColor = bundle.containsKey(KEY_CANCEL_BUTTON_COLOR) ? bundle.getInt(KEY_CANCEL_BUTTON_COLOR) : null;
+        options.titleColor = bundle.containsKey(KEY_TITLE_COLOR) ? bundle.getInt(KEY_TITLE_COLOR) : null;
+        options.messageColor = bundle.containsKey(KEY_MESSAGE_COLOR) ? bundle.getInt(KEY_MESSAGE_COLOR) : null;
+        options.backgroundColor = bundle.containsKey(KEY_BACKGROUND_COLOR) ? bundle.getInt(KEY_BACKGROUND_COLOR) : null;
+        options.titleFontSize = bundle.containsKey(KEY_TITLE_FONT_SIZE) ? bundle.getFloat(KEY_TITLE_FONT_SIZE) : null;
+        options.messageFontSize = bundle.containsKey(KEY_MESSAGE_FONT_SIZE) ? bundle.getFloat(KEY_MESSAGE_FONT_SIZE) : null;
+        options.buttonFontSize = bundle.containsKey(KEY_BUTTON_FONT_SIZE) ? bundle.getFloat(KEY_BUTTON_FONT_SIZE) : null;
+        return options;
     }
 }

@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -26,9 +25,12 @@ import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.DialogFragment;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,14 +58,6 @@ public class FullScreenDialogFragment extends DialogFragment {
     private static final String ARG_INPUT_TEXT = "inputText";
     private static final String ARG_OPTIONS = "options";
     private static final String ARG_FOCUS_INPUT = "focusInput";
-    private static final String ARG_BUTTON_COLOR = "buttonColor";
-    private static final String ARG_CANCEL_BUTTON_COLOR = "cancelButtonColor";
-    private static final String ARG_TITLE_COLOR = "titleColor";
-    private static final String ARG_MESSAGE_COLOR = "messageColor";
-    private static final String ARG_BACKGROUND_COLOR = "backgroundColor";
-    private static final String ARG_TITLE_FONT_SIZE = "titleFontSize";
-    private static final String ARG_MESSAGE_FONT_SIZE = "messageFontSize";
-    private static final String ARG_BUTTON_FONT_SIZE = "buttonFontSize";
 
     private ExtendedDialog.AlertCallback alertCallback;
     private ExtendedDialog.ConfirmCallback confirmCallback;
@@ -71,7 +65,8 @@ public class FullScreenDialogFragment extends DialogFragment {
     private ExtendedDialog.SingleSelectCallback singleSelectCallback;
     private ExtendedDialog.MultiSelectCallback multiSelectCallback;
 
-    private EditText inputField;
+    private TextInputEditText inputField;
+    private MaterialButton okBtn;
     private String selectedValue;
     private Set<String> selectedValues = new HashSet<>();
     private boolean dismissed = false;
@@ -111,35 +106,9 @@ public class FullScreenDialogFragment extends DialogFragment {
         args.putString(ARG_INPUT_TEXT, inputText);
         args.putString(ARG_OPTIONS, optionsJson);
         args.putBoolean(ARG_FOCUS_INPUT, focusInput);
-
-        // Store style options
         if (styleOptions != null) {
-            if (styleOptions.getButtonColor() != null) {
-                args.putInt(ARG_BUTTON_COLOR, styleOptions.getButtonColor());
-            }
-            if (styleOptions.getCancelButtonColor() != null) {
-                args.putInt(ARG_CANCEL_BUTTON_COLOR, styleOptions.getCancelButtonColor());
-            }
-            if (styleOptions.getTitleColor() != null) {
-                args.putInt(ARG_TITLE_COLOR, styleOptions.getTitleColor());
-            }
-            if (styleOptions.getMessageColor() != null) {
-                args.putInt(ARG_MESSAGE_COLOR, styleOptions.getMessageColor());
-            }
-            if (styleOptions.getBackgroundColor() != null) {
-                args.putInt(ARG_BACKGROUND_COLOR, styleOptions.getBackgroundColor());
-            }
-            if (styleOptions.getTitleFontSize() != null) {
-                args.putFloat(ARG_TITLE_FONT_SIZE, styleOptions.getTitleFontSize());
-            }
-            if (styleOptions.getMessageFontSize() != null) {
-                args.putFloat(ARG_MESSAGE_FONT_SIZE, styleOptions.getMessageFontSize());
-            }
-            if (styleOptions.getButtonFontSize() != null) {
-                args.putFloat(ARG_BUTTON_FONT_SIZE, styleOptions.getButtonFontSize());
-            }
+            styleOptions.writeToBundle(args);
         }
-
         fragment.setArguments(args);
         return fragment;
     }
@@ -214,23 +183,14 @@ public class FullScreenDialogFragment extends DialogFragment {
         String inputText = args.getString(ARG_INPUT_TEXT);
         String optionsJson = args.getString(ARG_OPTIONS);
         boolean focusInput = args.getBoolean(ARG_FOCUS_INPUT, false);
-
-        // Get style options
-        Integer buttonColor = args.containsKey(ARG_BUTTON_COLOR) ? args.getInt(ARG_BUTTON_COLOR) : null;
-        Integer cancelButtonColor = args.containsKey(ARG_CANCEL_BUTTON_COLOR) ? args.getInt(ARG_CANCEL_BUTTON_COLOR) : null;
-        Integer titleColor = args.containsKey(ARG_TITLE_COLOR) ? args.getInt(ARG_TITLE_COLOR) : null;
-        Integer messageColor = args.containsKey(ARG_MESSAGE_COLOR) ? args.getInt(ARG_MESSAGE_COLOR) : null;
-        Integer backgroundColor = args.containsKey(ARG_BACKGROUND_COLOR) ? args.getInt(ARG_BACKGROUND_COLOR) : null;
-        Float titleFontSize = args.containsKey(ARG_TITLE_FONT_SIZE) ? args.getFloat(ARG_TITLE_FONT_SIZE) : null;
-        Float messageFontSize = args.containsKey(ARG_MESSAGE_FONT_SIZE) ? args.getFloat(ARG_MESSAGE_FONT_SIZE) : null;
-        Float buttonFontSize = args.containsKey(ARG_BUTTON_FONT_SIZE) ? args.getFloat(ARG_BUTTON_FONT_SIZE) : null;
+        DialogStyleOptions styleOptions = DialogStyleOptions.readFromBundle(args);
 
         // Create root layout
         Context ctx = getThemedContext();
         LinearLayout root = new LinearLayout(ctx);
         root.setOrientation(LinearLayout.VERTICAL);
-        if (backgroundColor != null) {
-            root.setBackgroundColor(backgroundColor);
+        if (styleOptions.getBackgroundColor() != null) {
+            root.setBackgroundColor(styleOptions.getBackgroundColor());
         } else {
             // Use Material 3 surface color or fallback to white
             TypedValue surfaceColor = new TypedValue();
@@ -251,10 +211,10 @@ public class FullScreenDialogFragment extends DialogFragment {
         // Create toolbar
         MaterialToolbar toolbar = new MaterialToolbar(ctx);
         toolbar.setTitle(title != null && !title.isEmpty() ? title : "");
-        if (titleColor != null) {
-            toolbar.setTitleTextColor(titleColor);
+        if (styleOptions.getTitleColor() != null) {
+            toolbar.setTitleTextColor(styleOptions.getTitleColor());
         }
-        if (titleFontSize != null) {
+        if (styleOptions.getTitleFontSize() != null) {
             toolbar.setTitleTextAppearance(ctx, com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
         }
         toolbar.setNavigationIcon(com.google.android.material.R.drawable.ic_m3_chip_close);
@@ -287,13 +247,21 @@ public class FullScreenDialogFragment extends DialogFragment {
         if (message != null && !message.isEmpty()) {
             TextView messageView = new TextView(ctx);
             messageView.setText(message);
-            if (messageFontSize != null) {
-                messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, messageFontSize);
+            if (styleOptions.getMessageFontSize() != null) {
+                messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
             } else {
-                messageView.setTextSize(16);
+                // M3 dialog supporting text: 14sp, weight 400, tracking 0.25sp
+                TextViewCompat.setTextAppearance(messageView,
+                    com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
             }
-            if (messageColor != null) {
-                messageView.setTextColor(messageColor);
+            if (styleOptions.getMessageColor() != null) {
+                messageView.setTextColor(styleOptions.getMessageColor());
+            } else {
+                // M3 dialog supporting text color: onSurfaceVariant (#49454F)
+                TypedValue onSurfaceVariant = new TypedValue();
+                if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, onSurfaceVariant, true)) {
+                    messageView.setTextColor(onSurfaceVariant.data);
+                }
             }
             LinearLayout.LayoutParams messageParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -326,22 +294,29 @@ public class FullScreenDialogFragment extends DialogFragment {
         buttonContainer.setPadding(horizontalPadding, verticalPadding / 2, horizontalPadding, verticalPadding);
         buttonContainer.setGravity(android.view.Gravity.END);
 
+        // Get M3 primary color for text buttons
+        TypedValue primaryColor = new TypedValue();
+        ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, primaryColor, true);
+        int primaryColorValue = primaryColor.data;
+
         if (type != DialogType.ALERT) {
-            // Cancel button
-            MaterialButton cancelBtn = new MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+            // Cancel button - M3 text button style (never disabled per M3 guidelines)
+            MaterialButton cancelBtn = new MaterialButton(ctx, null,
+                com.google.android.material.R.attr.borderlessButtonStyle);
             cancelBtn.setText(cancelButton);
             cancelBtn.setOnClickListener((v) -> {
                 handleCancel();
                 dismiss();
             });
 
-            // Apply cancel button styles
-            if (cancelButtonColor != null) {
-                cancelBtn.setTextColor(cancelButtonColor);
-                cancelBtn.setStrokeColor(ColorStateList.valueOf(cancelButtonColor));
+            // Apply cancel button color - use custom or M3 primary
+            if (styleOptions.getCancelButtonColor() != null) {
+                cancelBtn.setTextColor(ColorStateList.valueOf(styleOptions.getCancelButtonColor()));
+            } else {
+                cancelBtn.setTextColor(ColorStateList.valueOf(primaryColorValue));
             }
-            if (buttonFontSize != null) {
-                cancelBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, buttonFontSize);
+            if (styleOptions.getButtonFontSize() != null) {
+                cancelBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
             }
 
             LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
@@ -353,20 +328,30 @@ public class FullScreenDialogFragment extends DialogFragment {
             buttonContainer.addView(cancelBtn);
         }
 
-        // OK button
-        MaterialButton okBtn = new MaterialButton(ctx);
+        // OK button - M3 text button style (same as Cancel per M3 guidelines)
+        okBtn = new MaterialButton(ctx, null,
+            com.google.android.material.R.attr.borderlessButtonStyle);
         okBtn.setText(okButton);
         okBtn.setOnClickListener((v) -> {
             handleConfirm(type);
             dismiss();
         });
 
-        // Apply OK button styles
-        if (buttonColor != null) {
-            okBtn.setBackgroundTintList(ColorStateList.valueOf(buttonColor));
+        // Apply OK button color - use custom or M3 primary
+        if (styleOptions.getButtonColor() != null) {
+            okBtn.setTextColor(ColorStateList.valueOf(styleOptions.getButtonColor()));
+        } else {
+            okBtn.setTextColor(ColorStateList.valueOf(primaryColorValue));
         }
-        if (buttonFontSize != null) {
-            okBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, buttonFontSize);
+        if (styleOptions.getButtonFontSize() != null) {
+            okBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
+        }
+
+        // M3 guideline: Disable confirming action until a choice is made for selection dialogs
+        if (type == DialogType.SINGLE_SELECT && selectedValue == null) {
+            okBtn.setEnabled(false);
+        } else if (type == DialogType.MULTI_SELECT && selectedValues.isEmpty()) {
+            okBtn.setEnabled(false);
         }
 
         buttonContainer.addView(okBtn);
@@ -377,17 +362,26 @@ public class FullScreenDialogFragment extends DialogFragment {
     }
 
     private void addPromptContent(LinearLayout container, String placeholder, String text, boolean focusInput) {
-        inputField = new EditText(getThemedContext());
+        Context ctx = getThemedContext();
+
+        // Use Material 3 TextInputLayout with outlined style
+        TextInputLayout textInputLayout = new TextInputLayout(ctx, null,
+            com.google.android.material.R.attr.textInputOutlinedStyle);
+        textInputLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        textInputLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        inputField = new TextInputEditText(textInputLayout.getContext());
         inputField.setInputType(InputType.TYPE_CLASS_TEXT);
         if (placeholder != null) {
-            inputField.setHint(placeholder);
+            textInputLayout.setHint(placeholder);
         }
         if (text != null) {
             inputField.setText(text);
             inputField.setSelection(text.length());
         }
-        inputField.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        container.addView(inputField);
+        textInputLayout.addView(inputField);
+        container.addView(textInputLayout);
 
         if (focusInput) {
             inputField.requestFocus();
@@ -424,7 +418,13 @@ public class FullScreenDialogFragment extends DialogFragment {
 
                 RadioButton radioButton = new RadioButton(ctx);
                 radioButton.setText(label);
-                radioButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                TextViewCompat.setTextAppearance(radioButton,
+                    com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+                // M3 list item text color: onSurface (#1D1B20)
+                TypedValue onSurface = new TypedValue();
+                if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true)) {
+                    radioButton.setTextColor(onSurface.data);
+                }
                 radioButton.setId(View.generateViewId());
                 radioButton.setPadding((int) (8 * density), itemPadding, 0, itemPadding);
 
@@ -436,6 +436,10 @@ public class FullScreenDialogFragment extends DialogFragment {
                 radioButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
                     if (isChecked) {
                         selectedValue = finalValue;
+                        // M3 guideline: Enable confirming action when a choice is made
+                        if (okBtn != null) {
+                            okBtn.setEnabled(true);
+                        }
                     }
                 });
 
@@ -477,7 +481,13 @@ public class FullScreenDialogFragment extends DialogFragment {
 
                 CheckBox checkBox = new CheckBox(ctx);
                 checkBox.setText(label);
-                checkBox.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                TextViewCompat.setTextAppearance(checkBox,
+                    com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+                // M3 list item text color: onSurface (#1D1B20)
+                TypedValue onSurface = new TypedValue();
+                if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true)) {
+                    checkBox.setTextColor(onSurface.data);
+                }
                 checkBox.setPadding((int) (8 * density), itemPadding, 0, itemPadding);
                 checkBox.setChecked(selectedValues.contains(value));
 
@@ -487,6 +497,10 @@ public class FullScreenDialogFragment extends DialogFragment {
                         selectedValues.add(finalValue);
                     } else {
                         selectedValues.remove(finalValue);
+                    }
+                    // M3 guideline: Enable confirming action when a choice is made
+                    if (okBtn != null) {
+                        okBtn.setEnabled(!selectedValues.isEmpty());
                     }
                 });
 
