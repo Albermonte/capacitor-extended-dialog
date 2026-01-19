@@ -33,13 +33,19 @@ This is a Capacitor 6 plugin providing native dialogs with Material 3 (Android) 
   - `writeToBundle()` / `readFromBundle()` - Serializes options for passing to DialogFragment
   - `hasStyles()` - Returns true if any custom style is set
 - `ExtendedDialog.java` - Dialog implementation using `MaterialAlertDialogBuilder`
-  - `applyM3Typography()` - Applies M3 typography and colors using theme attributes:
+  - `createButtonColorStateList()` - Helper method for button state styling
+    - Creates ColorStateList with enabled and disabled states
+    - Disabled state uses 38% opacity per M3 accessibility guidelines
+    - Uses `ColorUtils.setAlphaComponent()` for alpha calculation
+  - `applyM3Typography()` - Applies M3 typography and colors using `MaterialColors.getColor()` to resolve theme attributes dynamically:
     - Title: `TextAppearance_Material3_HeadlineSmall` with `colorOnSurface` (dynamic, #1D1B20 in light mode)
     - Message: `TextAppearance_Material3_BodyMedium` with `colorOnSurfaceVariant` (dynamic, #49454F in light mode)
-    - Buttons: `colorPrimary` (#6750A4 baseline) applied to positive, negative, and neutral buttons
+    - Buttons: `colorPrimary` (#6750A4 baseline) applied via `createButtonColorStateList()` to positive, negative, and neutral buttons
+    - Uses `MaterialColors.getColor()` instead of direct R.attr access to avoid NoSuchFieldError in consumer apps
   - `applyDialogStyles()` - Called after `applyM3Typography()` to apply custom style overrides on top of M3 defaults
+    - Custom button colors also use `createButtonColorStateList()` for proper disabled state handling
   - **Important**: MaterialAlertDialogBuilder uses AppCompat resource IDs. Title accessed via `androidx.appcompat.R.id.alertTitle`, NOT `android.R.id.alertTitle`
-  - All button styling uses `ColorStateList.valueOf()` for proper state handling
+  - All button styling uses ColorStateList for proper state handling (enabled/disabled)
 - `FullScreenDialogFragment.java` - Full-screen dialog mode using `DialogFragment` with explicit M3 color tokens:
   - Uses `DialogStyleOptions.readFromBundle()` to deserialize style options from arguments
   - Material components: `TextInputLayout` + `TextInputEditText` for prompt inputs
