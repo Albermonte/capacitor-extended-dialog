@@ -115,10 +115,9 @@ public class ExtendedDialog {
             TextViewCompat.setTextAppearance(titleView,
                 com.google.android.material.R.style.TextAppearance_Material3_HeadlineSmall);
             // M3 dialog headline color: onSurface (#1D1B20)
-            TypedValue onSurface = new TypedValue();
-            if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true)) {
-                titleView.setTextColor(onSurface.data);
-            }
+            // Use MaterialColors for proper theme attribute resolution across different R class configurations
+            int onSurfaceColor = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);
+            titleView.setTextColor(onSurfaceColor);
         }
 
         // Apply M3 BodyMedium to message with onSurfaceVariant color
@@ -127,28 +126,26 @@ public class ExtendedDialog {
             TextViewCompat.setTextAppearance(messageView,
                 com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
             // M3 dialog supporting text color: onSurfaceVariant (#49454F)
-            TypedValue onSurfaceVariant = new TypedValue();
-            if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, onSurfaceVariant, true)) {
-                messageView.setTextColor(onSurfaceVariant.data);
-            }
+            // Use MaterialColors for proper theme attribute resolution
+            int onSurfaceVariantColor = MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFF49454F);
+            messageView.setTextColor(onSurfaceVariantColor);
         }
 
         // Apply M3 colorPrimary to dialog buttons
         // This ensures consistent button colors across all dialogs regardless of app theme
-        TypedValue primaryColor = new TypedValue();
-        if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, primaryColor, true)) {
-            Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-            if (positiveButton != null) {
-                positiveButton.setTextColor(ColorStateList.valueOf(primaryColor.data));
-            }
-            Button negativeButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-            if (negativeButton != null) {
-                negativeButton.setTextColor(ColorStateList.valueOf(primaryColor.data));
-            }
-            Button neutralButton = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
-            if (neutralButton != null) {
-                neutralButton.setTextColor(ColorStateList.valueOf(primaryColor.data));
-            }
+        // Use MaterialColors.getColor with android.R.attr.colorPrimary for better compatibility
+        int primaryColor = MaterialColors.getColor(ctx, android.R.attr.colorPrimary, 0xFF6750A4);
+        Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        if (positiveButton != null) {
+            positiveButton.setTextColor(ColorStateList.valueOf(primaryColor));
+        }
+        Button negativeButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
+        if (negativeButton != null) {
+            negativeButton.setTextColor(ColorStateList.valueOf(primaryColor));
+        }
+        Button neutralButton = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
+        if (neutralButton != null) {
+            neutralButton.setTextColor(ColorStateList.valueOf(primaryColor));
         }
     }
 

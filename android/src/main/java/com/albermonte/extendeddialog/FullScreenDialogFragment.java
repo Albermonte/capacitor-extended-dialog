@@ -29,6 +29,7 @@ import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.DialogFragment;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
@@ -193,12 +194,9 @@ public class FullScreenDialogFragment extends DialogFragment {
             root.setBackgroundColor(styleOptions.getBackgroundColor());
         } else {
             // Use Material 3 surface color or fallback to white
-            TypedValue surfaceColor = new TypedValue();
-            if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorSurface, surfaceColor, true)) {
-                root.setBackgroundColor(surfaceColor.data);
-            } else {
-                root.setBackgroundColor(getResources().getColor(android.R.color.white, null));
-            }
+            // Use android.R.attr.colorBackground which maps to surface in M3 themes
+            int surfaceColor = MaterialColors.getColor(ctx, android.R.attr.colorBackground, 0xFFFFFFFF);
+            root.setBackgroundColor(surfaceColor);
         }
 
         // Handle window insets for edge-to-edge display
@@ -220,10 +218,9 @@ public class FullScreenDialogFragment extends DialogFragment {
         toolbar.setNavigationIcon(com.google.android.material.R.drawable.ic_m3_chip_close);
 
         // Tint navigation icon for proper visibility in dark/light themes
-        TypedValue colorOnSurface = new TypedValue();
-        if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, colorOnSurface, true)) {
-            toolbar.setNavigationIconTint(colorOnSurface.data);
-        }
+        // Use android.R.attr.textColorPrimary which maps to onSurface in M3 themes
+        int colorOnSurface = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);
+        toolbar.setNavigationIconTint(colorOnSurface);
 
         toolbar.setNavigationOnClickListener((v) -> {
             handleCancel();
@@ -258,10 +255,9 @@ public class FullScreenDialogFragment extends DialogFragment {
                 messageView.setTextColor(styleOptions.getMessageColor());
             } else {
                 // M3 dialog supporting text color: onSurfaceVariant (#49454F)
-                TypedValue onSurfaceVariant = new TypedValue();
-                if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, onSurfaceVariant, true)) {
-                    messageView.setTextColor(onSurfaceVariant.data);
-                }
+                // Use android.R.attr.textColorSecondary which maps to onSurfaceVariant in M3 themes
+                int onSurfaceVariantColor = MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFF49454F);
+                messageView.setTextColor(onSurfaceVariantColor);
             }
             LinearLayout.LayoutParams messageParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -295,9 +291,8 @@ public class FullScreenDialogFragment extends DialogFragment {
         buttonContainer.setGravity(android.view.Gravity.END);
 
         // Get M3 primary color for text buttons
-        TypedValue primaryColor = new TypedValue();
-        ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, primaryColor, true);
-        int primaryColorValue = primaryColor.data;
+        // Use android.R.attr.colorPrimary with M3 baseline fallback
+        int primaryColorValue = MaterialColors.getColor(ctx, android.R.attr.colorPrimary, 0xFF6750A4);
 
         if (type != DialogType.ALERT) {
             // Cancel button - M3 text button style (never disabled per M3 guidelines)
@@ -421,10 +416,9 @@ public class FullScreenDialogFragment extends DialogFragment {
                 TextViewCompat.setTextAppearance(radioButton,
                     com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
                 // M3 list item text color: onSurface (#1D1B20)
-                TypedValue onSurface = new TypedValue();
-                if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true)) {
-                    radioButton.setTextColor(onSurface.data);
-                }
+                // Use android.R.attr.textColorPrimary which maps to onSurface in M3 themes
+                int onSurfaceColor = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);
+                radioButton.setTextColor(onSurfaceColor);
                 radioButton.setId(View.generateViewId());
                 radioButton.setPadding((int) (8 * density), itemPadding, 0, itemPadding);
 
@@ -484,10 +478,9 @@ public class FullScreenDialogFragment extends DialogFragment {
                 TextViewCompat.setTextAppearance(checkBox,
                     com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
                 // M3 list item text color: onSurface (#1D1B20)
-                TypedValue onSurface = new TypedValue();
-                if (ctx.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, onSurface, true)) {
-                    checkBox.setTextColor(onSurface.data);
-                }
+                // Use android.R.attr.textColorPrimary which maps to onSurface in M3 themes
+                int onSurfaceColor = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);
+                checkBox.setTextColor(onSurfaceColor);
                 checkBox.setPadding((int) (8 * density), itemPadding, 0, itemPadding);
                 checkBox.setChecked(selectedValues.contains(value));
 
