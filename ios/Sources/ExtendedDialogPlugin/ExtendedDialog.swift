@@ -420,8 +420,12 @@ public struct DialogStyleOptions {
     private func applyLiquidGlassStyle(to alert: UIAlertController) {
         // Apply Liquid Glass styling for iOS 26+
         if #available(iOS 26, *) {
-            // iOS 26 automatically applies Liquid Glass styling to system controls
-            // Additional customization can be applied here if needed
+            // iOS 26 automatically applies Liquid Glass styling to UIAlertController
+            // The system handles glass background effects for alerts natively
+            // Additional layer-based glass effects can be applied to custom views if needed
+            if let view = alert.view {
+                view.layer.cornerCurve = .continuous
+            }
         } else {
             // For older iOS versions, apply a similar visual style
             if let view = alert.view {

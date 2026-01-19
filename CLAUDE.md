@@ -38,6 +38,13 @@ All five dialog types (alert, confirm, prompt, singleSelect, multiSelect) suppor
 - `basic` - Standard modal dialog (default)
 - `fullscreen` - Full-screen dialog presentation
 
+### Prompt Input Focus
+Prompt dialogs accept an optional `focusInput` boolean parameter to automatically focus the input field and open the keyboard:
+- **iOS basic mode**: Input always auto-focuses due to UIAlertController's built-in behavior
+- **iOS fullscreen mode**: Controlled by `focusInput` parameter
+- **Android & Web**: Controlled by `focusInput` parameter in both modes
+- Default: `false` (except iOS basic mode)
+
 ### Style Options
 All dialogs accept optional `DialogStyleOptions` for customization:
 - `buttonColor` - OK/primary button color (hex, e.g., "#FF5722")

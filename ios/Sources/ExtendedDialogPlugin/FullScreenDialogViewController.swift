@@ -51,9 +51,10 @@ public class FullScreenDialogViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
         button.setImage(UIImage(systemName: "xmark", withConfiguration: config), for: .normal)
-        button.tintColor = UIColor.darkGray
-        button.backgroundColor = UIColor.white
+        button.tintColor = .label
+        button.backgroundColor = .systemBackground
         button.layer.cornerRadius = 22
+        button.layer.cornerCurve = .continuous
         button.layer.shadowColor = UIColor.black.cgColor
         button.layer.shadowOpacity = 0.08
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -101,6 +102,7 @@ public class FullScreenDialogViewController: UIViewController {
         let fontSize = styleOptions?.buttonFontSize ?? 17
         button.titleLabel?.font = .systemFont(ofSize: fontSize, weight: .medium)
         button.layer.cornerRadius = 12
+        button.layer.cornerCurve = .continuous
         button.layer.borderWidth = 1
         let cancelColor = styleOptions?.cancelButtonColor ?? .systemBlue
         button.setTitleColor(cancelColor, for: .normal)
@@ -118,13 +120,20 @@ public class FullScreenDialogViewController: UIViewController {
         let buttonColor = styleOptions?.buttonColor ?? .systemBlue
         button.backgroundColor = buttonColor
         button.layer.cornerRadius = 12
+        button.layer.cornerCurve = .continuous
         button.addTarget(self, action: #selector(okTapped), for: .touchUpInside)
         return button
     }()
 
     private lazy var blurView: UIVisualEffectView = {
-        let blurEffect = UIBlurEffect(style: .systemThinMaterial)
-        let view = UIVisualEffectView(effect: blurEffect)
+        let view: UIVisualEffectView
+        if #available(iOS 26, *) {
+            let glassEffect = UIGlassEffect()
+            view = UIVisualEffectView(effect: glassEffect)
+        } else {
+            let blurEffect = UIBlurEffect(style: .systemThinMaterial)
+            view = UIVisualEffectView(effect: blurEffect)
+        }
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -237,7 +246,7 @@ public class FullScreenDialogViewController: UIViewController {
         if let bgColor = styleOptions?.backgroundColor {
             view.backgroundColor = bgColor
         } else {
-            view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
+            view.backgroundColor = .systemGroupedBackground
         }
 
         // Add blur background
@@ -357,10 +366,11 @@ public class FullScreenDialogViewController: UIViewController {
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.placeholder = inputPlaceholder
         textField.text = inputText
-        textField.borderStyle = .roundedRect
         textField.font = .systemFont(ofSize: 16)
-        textField.backgroundColor = .white
+        textField.borderStyle = .roundedRect
+        textField.backgroundColor = .secondarySystemGroupedBackground
         textField.layer.cornerRadius = 8
+
         if focusInput {
             textField.becomeFirstResponder()
         }
@@ -374,23 +384,23 @@ public class FullScreenDialogViewController: UIViewController {
         table.dataSource = self
         table.register(UITableViewCell.self, forCellReuseIdentifier: "OptionCell")
         table.layer.cornerRadius = 12
+        table.layer.cornerCurve = .continuous
         table.clipsToBounds = true
-        table.backgroundColor = .white
         table.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        table.backgroundColor = .secondarySystemGroupedBackground
+
         return table
     }
 
     private func applyLiquidGlassStyle() {
-        // Apply Liquid Glass styling
+        // Apply Liquid Glass styling adjustments for iOS 26+
+        // The main glass effect is applied via blurView using UIGlassEffect
         if #available(iOS 26, *) {
-            // iOS 26 automatically applies Liquid Glass
-            // Additional customization can be done here
+            // On iOS 26+, adjust close button to complement the glass background
+            closeButtonView.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.3)
+            closeButtonView.layer.shadowOpacity = 0 // Glass handles visual depth
         }
-
-        // Apply corner curve to buttons
-        cancelButton.layer.cornerCurve = .continuous
-        okButton.layer.cornerCurve = .continuous
-        closeButtonView.layer.cornerCurve = .continuous
+        // Note: cornerCurve is set in button lazy vars for all iOS versions
     }
 
     // MARK: - Actions
