@@ -489,7 +489,16 @@ public struct DialogStyleOptions {
         }
 
         while let presentedViewController = topController.presentedViewController {
+            // Skip view controllers that are being dismissed or not in window hierarchy
+            if presentedViewController.isBeingDismissed || presentedViewController.view.window == nil {
+                break
+            }
             topController = presentedViewController
+        }
+
+        // If the top controller is being dismissed or not in window, fall back to root
+        if topController.isBeingDismissed || topController.view.window == nil {
+            return window.rootViewController
         }
 
         return topController
