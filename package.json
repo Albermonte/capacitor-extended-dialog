@@ -1,6 +1,6 @@
 {
   "name": "capacitor-extended-dialog",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Show native dialogs in Capacitor with Material 3 and Liquid Glass UI",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
