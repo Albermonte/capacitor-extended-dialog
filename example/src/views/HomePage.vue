@@ -215,6 +215,37 @@
         </ion-item>
       </ion-list>
 
+      <!-- Bug Fix Tests Section -->
+      <ion-list-header>
+        <ion-label>Bug Fix Tests</ion-label>
+      </ion-list-header>
+      <ion-list inset>
+        <ion-item button @click="showDarkModeButtonSheet('basic')">
+          <ion-label>
+            <h2>Dark Mode Button (Basic)</h2>
+            <p>Verify confirm button text contrast in dark mode</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showDarkModeButtonSheet('fullscreen')">
+          <ion-label>
+            <h2>Dark Mode Button (Fullscreen)</h2>
+            <p>Verify confirm button text contrast in dark mode</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showLongValueSheet('basic')">
+          <ion-label>
+            <h2>Long Value Overflow (Basic)</h2>
+            <p>Values should ellipsize, titles remain visible</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showLongValueSheet('fullscreen')">
+          <ion-label>
+            <h2>Long Value Overflow (Fullscreen)</h2>
+            <p>Values should ellipsize, titles remain visible</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
       <!-- Styled Dialogs Section -->
       <ion-list-header>
         <ion-label>Styled Dialogs</ion-label>
@@ -485,6 +516,38 @@ async function showMultiSelectPreselected() {
     selectedValues: result.values,
     cancelled: result.cancelled
   };
+}
+
+// Bug Fix Test handlers
+async function showDarkModeButtonSheet(mode: DialogMode) {
+  const result = await ExtendedDialog.sheet({
+    title: 'Dark Mode Test',
+    rows: [
+      { title: 'Theme', value: 'System Default' },
+      { title: 'Contrast', value: 'Button text should be readable' },
+      { title: 'Mode', value: mode },
+    ],
+    confirmButtonTitle: 'Looks Good',
+    cancelButtonTitle: 'Cancel',
+    mode,
+  });
+  lastResult.value = { type: 'darkModeTest', mode, confirmed: result.confirmed };
+}
+
+async function showLongValueSheet(mode: DialogMode) {
+  const result = await ExtendedDialog.sheet({
+    title: 'Overflow Test',
+    rows: [
+      { title: 'Wallet', value: 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000' },
+      { title: 'URL', value: 'https://example.com/very/long/path/that/should/be/truncated/properly' },
+      { title: 'Description', value: 'This is a really long value that would previously overflow and push the title off screen' },
+      { title: 'Short', value: 'OK' },
+    ],
+    confirmButtonTitle: 'Confirm',
+    cancelButtonTitle: 'Cancel',
+    mode,
+  });
+  lastResult.value = { type: 'overflowTest', mode, confirmed: result.confirmed };
 }
 
 // Styled Dialog handlers

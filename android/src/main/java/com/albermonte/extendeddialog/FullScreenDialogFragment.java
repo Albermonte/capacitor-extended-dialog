@@ -297,9 +297,10 @@ public class FullScreenDialogFragment extends DialogFragment {
 
         // Cancel button (not shown for ALERT type)
         if (type != DialogType.ALERT) {
-            MaterialButton cancelBtn = new MaterialButton(ctx, null,
-                com.google.android.material.R.attr.borderlessButtonStyle);
+            MaterialButton cancelBtn = new MaterialButton(ctx, null, android.R.attr.borderlessButtonStyle);
             cancelBtn.setText(cancelButton);
+            cancelBtn.setBackgroundTintList(ColorStateList.valueOf(android.graphics.Color.TRANSPARENT));
+            cancelBtn.setRippleColor(ColorStateList.valueOf(primaryColorValue & 0x1FFFFFFF));
             cancelBtn.setOnClickListener((v) -> {
                 handleCancel();
                 dismiss();
@@ -316,9 +317,10 @@ public class FullScreenDialogFragment extends DialogFragment {
         }
 
         // OK button
-        okBtn = new MaterialButton(ctx, null,
-            com.google.android.material.R.attr.borderlessButtonStyle);
+        okBtn = new MaterialButton(ctx, null, android.R.attr.borderlessButtonStyle);
         okBtn.setText(okButton);
+        okBtn.setBackgroundTintList(ColorStateList.valueOf(android.graphics.Color.TRANSPARENT));
+        okBtn.setRippleColor(ColorStateList.valueOf(primaryColorValue & 0x1FFFFFFF));
         okBtn.setOnClickListener((v) -> {
             handleConfirm(type);
             dismiss();
@@ -349,8 +351,7 @@ public class FullScreenDialogFragment extends DialogFragment {
         Context ctx = getThemedContext();
 
         // Use Material 3 TextInputLayout with outlined style
-        TextInputLayout textInputLayout = new TextInputLayout(ctx, null,
-            com.google.android.material.R.attr.textInputOutlinedStyle);
+        TextInputLayout textInputLayout = new TextInputLayout(ctx);
         textInputLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
         textInputLayout.setLayoutParams(new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));

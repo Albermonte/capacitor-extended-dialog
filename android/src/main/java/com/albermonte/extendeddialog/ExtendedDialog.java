@@ -379,8 +379,7 @@ public class ExtendedDialog {
             builder.setMessage(message);
 
             // Use Material 3 TextInputLayout with outlined style
-            TextInputLayout textInputLayout = new TextInputLayout(themedContext, null,
-                com.google.android.material.R.attr.textInputOutlinedStyle);
+            TextInputLayout textInputLayout = new TextInputLayout(themedContext);
             textInputLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
 
             final TextInputEditText input = new TextInputEditText(textInputLayout.getContext());

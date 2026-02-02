@@ -140,7 +140,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             handleParams.topMargin = (int) (16 * density);
             handleParams.bottomMargin = (int) (8 * density);
             dragHandle.setLayoutParams(handleParams);
-            int outlineVariantColor = MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOutlineVariant, 0xFFCAC4D0);
+            int outlineVariantColor = MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFFCAC4D0);
             android.graphics.drawable.GradientDrawable handleDrawable = new android.graphics.drawable.GradientDrawable();
             handleDrawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
             handleDrawable.setCornerRadius(handleHeight / 2f);
@@ -237,7 +237,8 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         } else {
             confirmBtn.setBackgroundTintList(ColorStateList.valueOf(primaryColor));
         }
-        confirmBtn.setTextColor(ColorStateList.valueOf(0xFFFFFFFF));
+        int onPrimaryColor = 0xFFFFFFFF;
+        confirmBtn.setTextColor(ColorStateList.valueOf(onPrimaryColor));
         confirmBtn.setCornerRadius((int) (24 * density));
         confirmBtn.setMinHeight(buttonHeight);
         confirmBtn.setPadding(buttonHorizontalPadding, 0, buttonHorizontalPadding, 0);
@@ -249,14 +250,15 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         confirmBtn.setLayoutParams(confirmParams);
         buttonContainer.addView(confirmBtn);
 
-        // Cancel button
-        MaterialButton cancelBtn = new MaterialButton(ctx, null,
-            com.google.android.material.R.attr.borderlessButtonStyle);
+        // Cancel button (text-only style, no background fill)
+        MaterialButton cancelBtn = new MaterialButton(ctx, null, android.R.attr.borderlessButtonStyle);
         cancelBtn.setText(cancelButton);
         cancelBtn.setOnClickListener(v -> {
             handleCancel();
             dismiss();
         });
+        cancelBtn.setBackgroundTintList(ColorStateList.valueOf(android.graphics.Color.TRANSPARENT));
+        cancelBtn.setRippleColor(ColorStateList.valueOf(primaryColor & 0x1FFFFFFF));
         if (styleOptions.getCancelButtonColor() != null) {
             cancelBtn.setTextColor(ColorStateList.valueOf(styleOptions.getCancelButtonColor()));
         } else {
@@ -363,6 +365,10 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             if (styleOptions.getMessageFontSize() != null) {
                 rowValue.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
             }
+            rowValue.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            rowValue.setMaxLines(2);
+            LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            rowValue.setLayoutParams(valueParams);
             rowLayout.addView(rowValue);
         }
 
