@@ -11,6 +11,8 @@ import type {
   SingleSelectResult,
   MultiSelectOptions,
   MultiSelectResult,
+  SheetOptions,
+  SheetResult,
   DialogStyleOptions,
 } from './definitions';
 
@@ -256,5 +258,122 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
 
   private removeOverlay(overlay: HTMLDivElement): void {
     overlay.remove();
+  }
+
+  async sheet(options: SheetOptions): Promise<SheetResult> {
+    return new Promise((resolve) => {
+      const overlay = this.createOverlay();
+      const dialog = this.createSheetDialogContainer(options);
+
+      // Header section with logo and title
+      const headerSection = document.createElement('div');
+      headerSection.style.cssText = 'display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;';
+
+      if (options.headerLogo) {
+        const headerLogo = document.createElement('img');
+        headerLogo.src = options.headerLogo;
+        headerLogo.style.cssText = 'width: 48px; height: 48px; object-fit: contain; margin-bottom: 12px; border-radius: 8px;';
+        headerLogo.onerror = () => {
+          headerLogo.style.display = 'none';
+        };
+        headerSection.appendChild(headerLogo);
+      }
+
+      const titleEl = document.createElement('h2');
+      titleEl.textContent = options.title;
+      const titleFontSize = options.titleFontSize ?? 20;
+      const titleColor = options.titleColor ?? 'inherit';
+      titleEl.style.cssText = `margin: 0; font-size: ${titleFontSize}px; font-weight: 600; color: ${titleColor}; text-align: center;`;
+      headerSection.appendChild(titleEl);
+
+      dialog.appendChild(headerSection);
+
+      // Rows container
+      const rowsContainer = document.createElement('div');
+      rowsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 0; margin-bottom: 24px;';
+
+      options.rows.forEach((row, index) => {
+        const rowEl = document.createElement('div');
+        rowEl.style.cssText = `
+          display: flex;
+          align-items: center;
+          padding: 16px 0;
+          ${index < options.rows.length - 1 ? 'border-bottom: 1px solid #e0e0e0;' : ''}
+        `;
+
+        if (row.logo) {
+          const rowLogo = document.createElement('img');
+          rowLogo.src = row.logo;
+          rowLogo.style.cssText = 'width: 24px; height: 24px; object-fit: contain; margin-right: 12px; border-radius: 4px; flex-shrink: 0;';
+          rowLogo.onerror = () => {
+            rowLogo.style.display = 'none';
+          };
+          rowEl.appendChild(rowLogo);
+        }
+
+        const rowTitle = document.createElement('span');
+        rowTitle.textContent = row.title;
+        const messageFontSize = options.messageFontSize ?? 16;
+        const messageColor = options.messageColor ?? '#333';
+        rowTitle.style.cssText = `font-size: ${messageFontSize}px; color: ${messageColor}; flex: 1;`;
+        rowEl.appendChild(rowTitle);
+
+        if (row.value) {
+          const rowValue = document.createElement('span');
+          rowValue.textContent = row.value;
+          rowValue.style.cssText = `font-size: ${messageFontSize}px; color: #666; text-align: right; margin-left: 12px;`;
+          rowEl.appendChild(rowValue);
+        }
+
+        rowsContainer.appendChild(rowEl);
+      });
+
+      dialog.appendChild(rowsContainer);
+
+      // Button container
+      const buttonContainer = this.createButtonContainer();
+
+      const cancelButton = this.createButton(
+        options.cancelButtonTitle ?? 'Cancel',
+        false,
+        () => {
+          this.removeOverlay(overlay);
+          resolve({ confirmed: false });
+        },
+        options,
+      );
+
+      const confirmButton = this.createButton(
+        options.confirmButtonTitle ?? 'Confirm',
+        true,
+        () => {
+          this.removeOverlay(overlay);
+          resolve({ confirmed: true });
+        },
+        options,
+      );
+
+      buttonContainer.appendChild(cancelButton);
+      buttonContainer.appendChild(confirmButton);
+      dialog.appendChild(buttonContainer);
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+    });
+  }
+
+  private createSheetDialogContainer(options: SheetOptions): HTMLDivElement {
+    const dialog = document.createElement('div');
+    const bgColor = options.backgroundColor ?? 'white';
+    dialog.style.cssText = `
+      background: ${bgColor};
+      border-radius: 16px;
+      padding: 24px;
+      min-width: 320px;
+      max-width: 420px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    `;
+    return dialog;
   }
 }

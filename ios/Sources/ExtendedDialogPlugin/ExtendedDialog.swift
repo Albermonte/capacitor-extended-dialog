@@ -6,6 +6,12 @@ public struct SelectOption {
     let value: String
 }
 
+public struct SheetRow {
+    let title: String
+    let logo: String?
+    let value: String?
+}
+
 public struct DialogStyleOptions {
     var buttonColor: UIColor?
     var cancelButtonColor: UIColor?
@@ -77,6 +83,7 @@ public struct DialogStyleOptions {
     public typealias PromptCallback = (String, Bool) -> Void
     public typealias SingleSelectCallback = (String?, Bool) -> Void
     public typealias MultiSelectCallback = ([String], Bool) -> Void
+    public typealias SheetCallback = (Bool) -> Void
 
     // MARK: - Alert
 
@@ -404,6 +411,73 @@ public struct DialogStyleOptions {
         presentFullScreen(vc)
     }
 
+    // MARK: - Sheet
+
+    public func showSheet(
+        title: String,
+        headerLogo: String?,
+        rows: [[String: String]],
+        confirmButtonTitle: String?,
+        cancelButtonTitle: String?,
+        fullscreen: Bool,
+        styleOptions: DialogStyleOptions? = nil,
+        callback: @escaping SheetCallback
+    ) {
+        DispatchQueue.main.async {
+            let sheetRows = rows.compactMap { dict -> SheetRow? in
+                guard let rowTitle = dict["title"] else { return nil }
+                return SheetRow(title: rowTitle, logo: dict["logo"], value: dict["value"])
+            }
+
+            if fullscreen {
+                self.showFullScreenSheet(title: title, headerLogo: headerLogo, rows: sheetRows, confirmButtonTitle: confirmButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
+            } else {
+                self.showBasicSheet(title: title, headerLogo: headerLogo, rows: sheetRows, confirmButtonTitle: confirmButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
+            }
+        }
+    }
+
+    private func showBasicSheet(title: String, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
+        // Use FullScreenDialogViewController in sheet presentation mode for basic sheet
+        let vc = FullScreenDialogViewController(
+            dialogType: .sheet,
+            dialogTitle: title,
+            message: "",
+            okButtonTitle: confirmButtonTitle ?? "Confirm",
+            cancelButtonTitle: cancelButtonTitle ?? "Cancel",
+            inputPlaceholder: nil,
+            inputText: nil,
+            options: nil,
+            selectedValue: nil,
+            selectedValues: nil,
+            styleOptions: styleOptions
+        )
+        vc.sheetCallback = callback
+        vc.headerLogo = headerLogo
+        vc.sheetRows = rows
+        presentBasicSheet(vc)
+    }
+
+    private func showFullScreenSheet(title: String, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
+        let vc = FullScreenDialogViewController(
+            dialogType: .sheet,
+            dialogTitle: title,
+            message: "",
+            okButtonTitle: confirmButtonTitle ?? "Confirm",
+            cancelButtonTitle: cancelButtonTitle ?? "Cancel",
+            inputPlaceholder: nil,
+            inputText: nil,
+            options: nil,
+            selectedValue: nil,
+            selectedValues: nil,
+            styleOptions: styleOptions
+        )
+        vc.sheetCallback = callback
+        vc.headerLogo = headerLogo
+        vc.sheetRows = rows
+        presentFullScreen(vc)
+    }
+
     // MARK: - Helpers
 
     private func applyLiquidGlassStyle(to alert: UIAlertController) {
@@ -470,9 +544,28 @@ public struct DialogStyleOptions {
         viewController.modalPresentationStyle = .pageSheet
         viewController.modalTransitionStyle = .coverVertical
 
-        if #available(iOS 15.0, *) {
+        // Trigger layout so preferredContentSize is computed before configuring detents
+        viewController.loadViewIfNeeded()
+
+        if #available(iOS 16.0, *) {
             if let sheet = viewController.sheetPresentationController {
-                sheet.detents = [.medium(), .large()]
+                // Use dynamic detent based on content height, capped at 80%
+                let customDetent = UISheetPresentationController.Detent.custom { context in
+                    let maxHeight = context.maximumDetentValue * 0.8
+                    let contentHeight = viewController.preferredContentSize.height
+                    if contentHeight > 0 {
+                        return min(contentHeight, maxHeight)
+                    }
+                    return maxHeight
+                }
+                sheet.detents = [customDetent, .large()]
+                sheet.prefersGrabberVisible = true
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            }
+        } else if #available(iOS 15.0, *) {
+            if let sheet = viewController.sheetPresentationController {
+                // Fallback for iOS 15: use large detent to ensure content is visible
+                sheet.detents = [.large()]
                 sheet.prefersGrabberVisible = true
                 sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             }

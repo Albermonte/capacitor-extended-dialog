@@ -172,6 +172,49 @@
         </ion-item>
       </ion-list>
 
+      <!-- Sheet Dialogs Section -->
+      <ion-list-header>
+        <ion-label>Sheet Dialogs</ion-label>
+      </ion-list-header>
+      <ion-list inset>
+        <ion-item button @click="showSheet('basic')">
+          <ion-label>
+            <h2>Basic Sheet</h2>
+            <p>Confirmation sheet with rows</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showSheet('fullscreen')">
+          <ion-label>
+            <h2>Fullscreen Sheet</h2>
+            <p>Sheet in fullscreen mode</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showSheetWithLogo()">
+          <ion-label>
+            <h2>Sheet with Header Logo</h2>
+            <p>Sheet with header image</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showSheetWithRowLogos()">
+          <ion-label>
+            <h2>Sheet with Row Logos</h2>
+            <p>Each row has an icon</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showTransactionSheet()">
+          <ion-label>
+            <h2>Transaction Confirmation</h2>
+            <p>Real-world payment example</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showStyledSheet()">
+          <ion-label>
+            <h2>Styled Sheet</h2>
+            <p>Custom colors and fonts</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
       <!-- Styled Dialogs Section -->
       <ion-list-header>
         <ion-label>Styled Dialogs</ion-label>
@@ -537,6 +580,110 @@ async function showStyledMultiSelect() {
     type: 'styledMultiSelect',
     selectedValues: result.values,
     cancelled: result.cancelled
+  };
+}
+
+// Sheet handlers
+async function showSheet(mode: DialogMode) {
+  const result = await ExtendedDialog.sheet({
+    title: 'Order Summary',
+    rows: [
+      { title: 'Item', value: 'Premium Package' },
+      { title: 'Quantity', value: '1' },
+      { title: 'Price', value: '$99.99' },
+      { title: 'Tax', value: '$8.00' },
+      { title: 'Total', value: '$107.99' }
+    ],
+    confirmButtonTitle: 'Confirm Order',
+    cancelButtonTitle: 'Cancel',
+    mode
+  });
+  lastResult.value = {
+    type: 'sheet',
+    mode,
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithLogo() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Account Details',
+    headerLogo: 'https://picsum.photos/100',
+    rows: [
+      { title: 'Name', value: 'John Doe' },
+      { title: 'Email', value: 'john@example.com' },
+      { title: 'Member Since', value: 'Jan 2024' },
+      { title: 'Plan', value: 'Premium' }
+    ],
+    confirmButtonTitle: 'Continue',
+    cancelButtonTitle: 'Go Back'
+  });
+  lastResult.value = {
+    type: 'sheetWithLogo',
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithRowLogos() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Payment Methods',
+    rows: [
+      { title: 'Credit Card', logo: 'https://picsum.photos/seed/card/40', value: '•••• 4242' },
+      { title: 'PayPal', logo: 'https://picsum.photos/seed/paypal/40', value: 'john@email.com' },
+      { title: 'Apple Pay', logo: 'https://picsum.photos/seed/apple/40', value: 'Configured' },
+      { title: 'Bank Transfer', logo: 'https://picsum.photos/seed/bank/40', value: '•••• 1234' }
+    ],
+    confirmButtonTitle: 'Select',
+    cancelButtonTitle: 'Cancel',
+    mode: 'fullscreen'
+  });
+  lastResult.value = {
+    type: 'sheetWithRowLogos',
+    confirmed: result.confirmed
+  };
+}
+
+async function showTransactionSheet() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Confirm Transfer',
+    headerLogo: 'https://picsum.photos/seed/wallet/80',
+    rows: [
+      { title: 'From', value: 'Checking ••4521' },
+      { title: 'To', value: 'Savings ••8832' },
+      { title: 'Amount', value: '$500.00' },
+      { title: 'Fee', value: '$0.00' },
+      { title: 'Date', value: 'Today' }
+    ],
+    confirmButtonTitle: 'Transfer Now',
+    cancelButtonTitle: 'Cancel'
+  });
+  lastResult.value = {
+    type: 'transactionSheet',
+    confirmed: result.confirmed
+  };
+}
+
+async function showStyledSheet() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Subscription Details',
+    headerLogo: 'https://picsum.photos/seed/premium/80',
+    rows: [
+      { title: 'Plan', value: 'Premium Annual' },
+      { title: 'Price', value: '$79.99/year' },
+      { title: 'Renewal', value: 'Jan 28, 2027' },
+      { title: 'Discount', value: '-20%' }
+    ],
+    confirmButtonTitle: 'Subscribe',
+    cancelButtonTitle: 'Maybe Later',
+    mode: 'fullscreen',
+    buttonColor: '#4CAF50',
+    cancelButtonColor: '#9E9E9E',
+    titleColor: '#1976D2',
+    buttonFontSize: 18
+  });
+  lastResult.value = {
+    type: 'styledSheet',
+    confirmed: result.confirmed
   };
 }
 </script>

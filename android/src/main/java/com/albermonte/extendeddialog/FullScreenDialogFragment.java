@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -229,13 +230,14 @@ public class FullScreenDialogFragment extends DialogFragment {
 
         root.addView(toolbar);
 
+        float density = getResources().getDisplayMetrics().density;
+
         // Create scroll view for content
         ScrollView scrollView = new ScrollView(ctx);
         scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         LinearLayout contentLayout = new LinearLayout(ctx);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
-        float density = getResources().getDisplayMetrics().density;
         int horizontalPadding = (int) (32 * density);
         int verticalPadding = (int) (24 * density);
         contentLayout.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
@@ -284,18 +286,17 @@ public class FullScreenDialogFragment extends DialogFragment {
         scrollView.addView(contentLayout);
         root.addView(scrollView);
 
-        // Create button container
-        LinearLayout buttonContainer = new LinearLayout(ctx);
-        buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
-        buttonContainer.setPadding(horizontalPadding, verticalPadding / 2, horizontalPadding, verticalPadding);
-        buttonContainer.setGravity(android.view.Gravity.END);
-
-        // Get M3 primary color for text buttons
-        // Use android.R.attr.colorPrimary with M3 baseline fallback
+        // Button container at the bottom
         int primaryColorValue = MaterialColors.getColor(ctx, android.R.attr.colorPrimary, 0xFF6750A4);
 
+        LinearLayout buttonContainer = new LinearLayout(ctx);
+        buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
+        buttonContainer.setGravity(Gravity.END);
+        int buttonPadding = (int) (16 * density);
+        buttonContainer.setPadding(buttonPadding, buttonPadding, buttonPadding, buttonPadding);
+
+        // Cancel button (not shown for ALERT type)
         if (type != DialogType.ALERT) {
-            // Cancel button - M3 text button style (never disabled per M3 guidelines)
             MaterialButton cancelBtn = new MaterialButton(ctx, null,
                 com.google.android.material.R.attr.borderlessButtonStyle);
             cancelBtn.setText(cancelButton);
@@ -303,8 +304,6 @@ public class FullScreenDialogFragment extends DialogFragment {
                 handleCancel();
                 dismiss();
             });
-
-            // Apply cancel button color - use custom or M3 primary
             if (styleOptions.getCancelButtonColor() != null) {
                 cancelBtn.setTextColor(ColorStateList.valueOf(styleOptions.getCancelButtonColor()));
             } else {
@@ -313,17 +312,10 @@ public class FullScreenDialogFragment extends DialogFragment {
             if (styleOptions.getButtonFontSize() != null) {
                 cancelBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
             }
-
-            LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            cancelParams.rightMargin = (int) (8 * getResources().getDisplayMetrics().density);
-            cancelBtn.setLayoutParams(cancelParams);
             buttonContainer.addView(cancelBtn);
         }
 
-        // OK button - M3 text button style (same as Cancel per M3 guidelines)
+        // OK button
         okBtn = new MaterialButton(ctx, null,
             com.google.android.material.R.attr.borderlessButtonStyle);
         okBtn.setText(okButton);
@@ -331,8 +323,6 @@ public class FullScreenDialogFragment extends DialogFragment {
             handleConfirm(type);
             dismiss();
         });
-
-        // Apply OK button color - use custom or M3 primary
         if (styleOptions.getButtonColor() != null) {
             okBtn.setTextColor(ColorStateList.valueOf(styleOptions.getButtonColor()));
         } else {
@@ -342,7 +332,7 @@ public class FullScreenDialogFragment extends DialogFragment {
             okBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
         }
 
-        // M3 guideline: Disable confirming action until a choice is made for selection dialogs
+        // Disable confirming action until a choice is made for selection dialogs
         if (type == DialogType.SINGLE_SELECT && selectedValue == null) {
             okBtn.setEnabled(false);
         } else if (type == DialogType.MULTI_SELECT && selectedValues.isEmpty()) {
@@ -350,7 +340,6 @@ public class FullScreenDialogFragment extends DialogFragment {
         }
 
         buttonContainer.addView(okBtn);
-
         root.addView(buttonContainer);
 
         return root;

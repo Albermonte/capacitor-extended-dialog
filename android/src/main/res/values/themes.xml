@@ -31,4 +31,18 @@
     <style name="MaterialAlertDialog.ExtendedDialog" parent="MaterialAlertDialog.Material3">
         <item name="shapeAppearance">@style/ShapeAppearance.ExtendedDialog.MediumComponent</item>
     </style>
+
+    <!-- Material 3 Bottom Sheet Dialog Theme -->
+    <style name="ThemeOverlay.ExtendedDialog.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.ExtendedDialog.BottomSheet.Modal</item>
+    </style>
+
+    <style name="Widget.ExtendedDialog.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.ExtendedDialog.BottomSheet</item>
+    </style>
+
+    <style name="ShapeAppearance.ExtendedDialog.BottomSheet" parent="">
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
 </resources>

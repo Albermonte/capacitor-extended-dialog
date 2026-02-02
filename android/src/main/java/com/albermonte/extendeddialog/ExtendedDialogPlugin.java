@@ -8,6 +8,7 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 @CapacitorPlugin(name = "ExtendedDialog")
 public class ExtendedDialogPlugin extends Plugin {
@@ -202,6 +203,50 @@ public class ExtendedDialogPlugin extends Plugin {
             );
         } catch (JSONException e) {
             call.reject("Invalid options format");
+        }
+    }
+
+    @PluginMethod
+    public void sheet(PluginCall call) {
+        String title = call.getString("title");
+        String headerLogo = call.getString("headerLogo");
+        JSArray rowsArray = call.getArray("rows");
+        String confirmButtonTitle = call.getString("confirmButtonTitle");
+        String cancelButtonTitle = call.getString("cancelButtonTitle");
+        String mode = call.getString("mode", "basic");
+        boolean fullscreen = "fullscreen".equals(mode);
+        DialogStyleOptions styleOptions = extractStyleOptions(call);
+
+        if (title == null) {
+            call.reject("title is required");
+            return;
+        }
+
+        if (rowsArray == null) {
+            call.reject("rows is required");
+            return;
+        }
+
+        try {
+            JSONArray rows = new JSONArray(rowsArray.toString());
+
+            implementation.showSheet(
+                getActivity(),
+                title,
+                headerLogo,
+                rows,
+                confirmButtonTitle,
+                cancelButtonTitle,
+                fullscreen,
+                styleOptions,
+                (confirmed) -> {
+                    JSObject result = new JSObject();
+                    result.put("confirmed", confirmed);
+                    call.resolve(result);
+                }
+            );
+        } catch (JSONException e) {
+            call.reject("Invalid rows format");
         }
     }
 }

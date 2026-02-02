@@ -7,7 +7,6 @@ import android.content.res.ColorStateList;
 import android.text.InputType;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -167,6 +166,10 @@ public class ExtendedDialog {
 
     public interface MultiSelectCallback {
         void onResult(String[] values, boolean cancelled);
+    }
+
+    public interface SheetCallback {
+        void onResult(boolean confirmed);
     }
 
     public void showAlert(
@@ -726,6 +729,39 @@ public class ExtendedDialog {
             );
             fragment.setMultiSelectCallback(callback);
             fragment.show(activity.getSupportFragmentManager(), "fullscreen_multi_select");
+        });
+    }
+
+    // MARK: - Sheet
+
+    public void showSheet(
+        Activity activity,
+        String title,
+        String headerLogo,
+        JSONArray rows,
+        String confirmButtonTitle,
+        String cancelButtonTitle,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        SheetCallback callback
+    ) {
+        if (!(activity instanceof FragmentActivity)) {
+            callback.onResult(false);
+            return;
+        }
+        FragmentActivity fragmentActivity = (FragmentActivity) activity;
+        fragmentActivity.runOnUiThread(() -> {
+            SheetBottomDialogFragment fragment = SheetBottomDialogFragment.newInstance(
+                title,
+                headerLogo,
+                rows.toString(),
+                confirmButtonTitle != null ? confirmButtonTitle : "Confirm",
+                cancelButtonTitle != null ? cancelButtonTitle : "Cancel",
+                fullscreen,
+                styleOptions
+            );
+            fragment.setSheetCallback(callback);
+            fragment.show(fragmentActivity.getSupportFragmentManager(), "bottom_sheet");
         });
     }
 }

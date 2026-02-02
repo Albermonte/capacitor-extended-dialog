@@ -6,6 +6,7 @@ public enum DialogType {
     case prompt
     case singleSelect
     case multiSelect
+    case sheet
 }
 
 public class FullScreenDialogViewController: UIViewController {
@@ -17,6 +18,12 @@ public class FullScreenDialogViewController: UIViewController {
     var promptCallback: ((String, Bool) -> Void)?
     var singleSelectCallback: ((String?, Bool) -> Void)?
     var multiSelectCallback: (([String], Bool) -> Void)?
+    var sheetCallback: ((Bool) -> Void)?
+
+    // MARK: - Sheet Properties
+
+    var headerLogo: String?
+    var sheetRows: [SheetRow]?
 
     // MARK: - Properties
 
@@ -47,19 +54,32 @@ public class FullScreenDialogViewController: UIViewController {
     }()
 
     private lazy var closeButtonView: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
-        button.setImage(UIImage(systemName: "xmark", withConfiguration: config), for: .normal)
-        button.tintColor = .label
-        button.backgroundColor = .systemBackground
-        button.layer.cornerRadius = 22
-        button.layer.cornerCurve = .continuous
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOpacity = 0.08
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowRadius = 4
-        button.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+        let button: UIButton
+        if #available(iOS 26, *) {
+            var config = UIButton.Configuration.glass()
+            let symbolConfig = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
+            config.image = UIImage(systemName: "xmark", withConfiguration: symbolConfig)
+            config.baseForegroundColor = .label
+            let glassButton = UIButton(configuration: config)
+            glassButton.translatesAutoresizingMaskIntoConstraints = false
+            glassButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+            button = glassButton
+        } else {
+            let legacyButton = UIButton(type: .system)
+            legacyButton.translatesAutoresizingMaskIntoConstraints = false
+            let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
+            legacyButton.setImage(UIImage(systemName: "xmark", withConfiguration: config), for: .normal)
+            legacyButton.tintColor = .label
+            legacyButton.backgroundColor = .systemBackground
+            legacyButton.layer.cornerRadius = 22
+            legacyButton.layer.cornerCurve = .continuous
+            legacyButton.layer.shadowColor = UIColor.black.cgColor
+            legacyButton.layer.shadowOpacity = 0.08
+            legacyButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+            legacyButton.layer.shadowRadius = 4
+            legacyButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+            button = legacyButton
+        }
         return button
     }()
 
@@ -97,43 +117,74 @@ public class FullScreenDialogViewController: UIViewController {
     }()
 
     private lazy var cancelButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle(cancelButtonTitle ?? "Cancel", for: .normal)
-        let fontSize = styleOptions?.buttonFontSize ?? 17
-        button.titleLabel?.font = .systemFont(ofSize: fontSize, weight: .medium)
-        button.layer.cornerRadius = 12
-        button.layer.cornerCurve = .continuous
-        button.layer.borderWidth = 1
-        let cancelColor = styleOptions?.cancelButtonColor ?? .systemBlue
-        button.setTitleColor(cancelColor, for: .normal)
-        button.layer.borderColor = cancelColor.cgColor
-        button.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+        let button: UIButton
+        if #available(iOS 26, *) {
+            var config = UIButton.Configuration.glass()
+            config.title = cancelButtonTitle ?? "Cancel"
+            config.baseForegroundColor = styleOptions?.cancelButtonColor ?? .label
+            config.cornerStyle = .capsule
+            let fontSize = styleOptions?.buttonFontSize ?? 17
+            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .systemFont(ofSize: fontSize, weight: .medium)
+                return outgoing
+            }
+            let glassButton = UIButton(configuration: config)
+            glassButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+            button = glassButton
+        } else {
+            let legacyButton = UIButton(type: .system)
+            legacyButton.setTitle(cancelButtonTitle ?? "Cancel", for: .normal)
+            let fontSize = styleOptions?.buttonFontSize ?? 17
+            legacyButton.titleLabel?.font = .systemFont(ofSize: fontSize, weight: .medium)
+            let cancelColor = styleOptions?.cancelButtonColor ?? .systemBlue
+            legacyButton.setTitleColor(cancelColor, for: .normal)
+            legacyButton.layer.cornerRadius = 25
+            legacyButton.layer.cornerCurve = .continuous
+            legacyButton.layer.borderWidth = 1
+            legacyButton.layer.borderColor = cancelColor.cgColor
+            legacyButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+            button = legacyButton
+        }
         return button
     }()
 
     private lazy var okButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle(okButtonTitle, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        let fontSize = styleOptions?.buttonFontSize ?? 17
-        button.titleLabel?.font = .systemFont(ofSize: fontSize, weight: .semibold)
-        let buttonColor = styleOptions?.buttonColor ?? .systemBlue
-        button.backgroundColor = buttonColor
-        button.layer.cornerRadius = 12
-        button.layer.cornerCurve = .continuous
-        button.addTarget(self, action: #selector(okTapped), for: .touchUpInside)
+        let button: UIButton
+        if #available(iOS 26, *) {
+            var config = UIButton.Configuration.filled()
+            config.title = okButtonTitle
+            config.baseForegroundColor = .white
+            config.baseBackgroundColor = styleOptions?.buttonColor ?? .systemBlue
+            config.cornerStyle = .capsule
+            let fontSize = styleOptions?.buttonFontSize ?? 17
+            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .systemFont(ofSize: fontSize, weight: .semibold)
+                return outgoing
+            }
+            let glassButton = UIButton(configuration: config)
+            glassButton.addTarget(self, action: #selector(okTapped), for: .touchUpInside)
+            button = glassButton
+        } else {
+            let legacyButton = UIButton(type: .system)
+            legacyButton.setTitle(okButtonTitle, for: .normal)
+            legacyButton.setTitleColor(.white, for: .normal)
+            let fontSize = styleOptions?.buttonFontSize ?? 17
+            legacyButton.titleLabel?.font = .systemFont(ofSize: fontSize, weight: .semibold)
+            let buttonColor = styleOptions?.buttonColor ?? .systemBlue
+            legacyButton.backgroundColor = buttonColor
+            legacyButton.layer.cornerRadius = 25
+            legacyButton.layer.cornerCurve = .continuous
+            legacyButton.addTarget(self, action: #selector(okTapped), for: .touchUpInside)
+            button = legacyButton
+        }
         return button
     }()
 
     private lazy var blurView: UIVisualEffectView = {
-        let view: UIVisualEffectView
-        if #available(iOS 26, *) {
-            let glassEffect = UIGlassEffect()
-            view = UIVisualEffectView(effect: glassEffect)
-        } else {
-            let blurEffect = UIBlurEffect(style: .systemThinMaterial)
-            view = UIVisualEffectView(effect: blurEffect)
-        }
+        let effect = UIBlurEffect(style: .systemUltraThinMaterial)
+        let view = UIVisualEffectView(effect: effect)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -180,6 +231,38 @@ public class FullScreenDialogViewController: UIViewController {
         setupUI()
         applyLiquidGlassStyle()
         setupKeyboardHandling()
+        calculatePreferredContentSize()
+    }
+
+    private func calculatePreferredContentSize() {
+        view.layoutIfNeeded()
+
+        let safeTop = view.safeAreaInsets.top
+        let safeBottom = view.safeAreaInsets.bottom
+
+        let headerTop: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 20 : 12
+        let headerHeight: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 12 : 64
+        let spacingAfterHeader: CGFloat = 8
+
+        // Measure scroll content height for sheets, or content height for other types
+        var contentHeight: CGFloat = 0
+        for subview in view.subviews {
+            if let scrollView = subview as? UIScrollView {
+                contentHeight = scrollView.contentSize.height
+                break
+            }
+        }
+
+        let spacingToButtons: CGFloat = 16
+        let buttonStackHeight: CGFloat = (dialogType == .sheet && cancelButtonTitle != nil) ? 112 : 50
+        let bottomPadding: CGFloat = 4
+        let grabberAllowance: CGFloat = 20
+
+        let totalHeight = safeTop + headerTop + headerHeight + spacingAfterHeader
+            + contentHeight + spacingToButtons + buttonStackHeight + bottomPadding
+            + safeBottom + grabberAllowance
+
+        preferredContentSize = CGSize(width: 0, height: totalHeight)
     }
 
     deinit {
@@ -234,7 +317,7 @@ public class FullScreenDialogViewController: UIViewController {
         }
 
         UIView.animate(withDuration: duration) {
-            self.buttonStackBottomConstraint?.constant = -24
+            self.buttonStackBottomConstraint?.constant = -4
             self.view.layoutIfNeeded()
         }
     }
@@ -242,32 +325,37 @@ public class FullScreenDialogViewController: UIViewController {
     // MARK: - Setup
 
     private func setupUI() {
-        // Apply custom background color or default light gray background like iOS Calendar
+        // Apply background: custom color, or blur for sheets, or solid for fullscreen
         if let bgColor = styleOptions?.backgroundColor {
             view.backgroundColor = bgColor
+        } else if modalPresentationStyle == .pageSheet {
+            // Sheets use blur so content peeks through
+            view.backgroundColor = .clear
+            view.insertSubview(blurView, at: 0)
+            NSLayoutConstraint.activate([
+                blurView.topAnchor.constraint(equalTo: view.topAnchor),
+                blurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                blurView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                blurView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            ])
         } else {
+            // Fullscreen dialogs use solid background
             view.backgroundColor = .systemGroupedBackground
         }
-
-        // Add blur background
-        view.insertSubview(blurView, at: 0)
-        NSLayoutConstraint.activate([
-            blurView.topAnchor.constraint(equalTo: view.topAnchor),
-            blurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            blurView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
 
         // Header with close button and title
         view.addSubview(headerView)
         headerView.addSubview(closeButtonView)
         headerView.addSubview(titleLabel)
 
+        let headerTop: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 20 : 12
+        let headerHeight: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 12 : 64
+
         NSLayoutConstraint.activate([
-            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: headerTop),
             headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            headerView.heightAnchor.constraint(equalToConstant: 64),
+            headerView.heightAnchor.constraint(equalToConstant: headerHeight),
 
             closeButtonView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
             closeButtonView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
@@ -289,8 +377,16 @@ public class FullScreenDialogViewController: UIViewController {
             contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24)
         ])
 
-        // Message
+        // Message (hidden for sheet dialogs - title is shown in content area)
         contentView.addSubview(messageLabel)
+        if dialogType == .sheet {
+            messageLabel.isHidden = true
+            titleLabel.isHidden = true // Also hide header title for sheets
+            // Hide close button in basic sheet mode (.pageSheet presentation)
+            if modalPresentationStyle == .pageSheet {
+                closeButtonView.isHidden = true
+            }
+        }
         NSLayoutConstraint.activate([
             messageLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
             messageLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -333,6 +429,10 @@ public class FullScreenDialogViewController: UIViewController {
             tableView = table
             lastView = table
 
+        case .sheet:
+            // For sheet, use contentView.topAnchor since messageLabel is hidden
+            lastView = createSheetContent(in: contentView, below: contentView)
+
         default:
             break
         }
@@ -340,25 +440,74 @@ public class FullScreenDialogViewController: UIViewController {
         // Buttons (add before contentView bottom constraint so we can reference buttonStack)
         view.addSubview(buttonStack)
 
-        if dialogType != .alert && cancelButtonTitle != nil {
-            buttonStack.addArrangedSubview(cancelButton)
+        // For sheet dialogs: vertical layout with primary button first, cancel below
+        if dialogType == .sheet {
+            buttonStack.axis = .vertical
+            buttonStack.distribution = .fill
+            buttonStack.addArrangedSubview(okButton)
+            if cancelButtonTitle != nil {
+                configureCancelButtonForSheet()
+                buttonStack.addArrangedSubview(cancelButton)
+            }
+        } else {
+            // For other dialogs: horizontal layout with cancel first
+            if dialogType != .alert && cancelButtonTitle != nil {
+                buttonStack.addArrangedSubview(cancelButton)
+            }
+            buttonStack.addArrangedSubview(okButton)
         }
-        buttonStack.addArrangedSubview(okButton)
 
-        buttonStackBottomConstraint = buttonStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24)
+        buttonStackBottomConstraint = buttonStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -4)
+
+        // Calculate button stack height: 50 for single button or horizontal layout, 112 for vertical (two 50pt buttons + 12pt spacing)
+        let buttonStackHeight: CGFloat = (dialogType == .sheet && cancelButtonTitle != nil) ? 112 : 50
 
         NSLayoutConstraint.activate([
             buttonStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             buttonStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             buttonStackBottomConstraint!,
-            buttonStack.heightAnchor.constraint(equalToConstant: 50)
+            buttonStack.heightAnchor.constraint(equalToConstant: buttonStackHeight)
         ])
 
-        // Content bottom constraint - ensure content stays above buttons
-        NSLayoutConstraint.activate([
-            contentView.bottomAnchor.constraint(equalTo: lastView.bottomAnchor),
-            contentView.bottomAnchor.constraint(lessThanOrEqualTo: buttonStack.topAnchor, constant: -16)
-        ])
+        // For sheet dialogs, wrap contentView in a scroll view so rows are scrollable
+        if dialogType == .sheet {
+            // Remove contentView from its current superview and re-add inside a scroll view
+            contentView.removeFromSuperview()
+
+            let scrollView = UIScrollView()
+            scrollView.translatesAutoresizingMaskIntoConstraints = false
+            scrollView.showsVerticalScrollIndicator = true
+            scrollView.alwaysBounceVertical = false
+            view.addSubview(scrollView)
+
+            scrollView.addSubview(contentView)
+
+            NSLayoutConstraint.activate([
+                // Scroll view frame: between header and buttons
+                scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 8),
+                scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+                scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+                scrollView.bottomAnchor.constraint(equalTo: buttonStack.topAnchor, constant: -16),
+
+                // Content view pinned to scroll view's content guide
+                contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+                contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+                contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+                contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+
+                // Content width matches scroll view frame (no horizontal scrolling)
+                contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+
+                // Content view bottom matches its last subview
+                contentView.bottomAnchor.constraint(equalTo: lastView.bottomAnchor)
+            ])
+        } else {
+            // Content bottom constraint - ensure content stays above buttons
+            NSLayoutConstraint.activate([
+                contentView.bottomAnchor.constraint(equalTo: lastView.bottomAnchor),
+                contentView.bottomAnchor.constraint(lessThanOrEqualTo: buttonStack.topAnchor, constant: -16)
+            ])
+        }
     }
 
     private func createTextField() -> UITextField {
@@ -392,15 +541,231 @@ public class FullScreenDialogViewController: UIViewController {
         return table
     }
 
-    private func applyLiquidGlassStyle() {
-        // Apply Liquid Glass styling adjustments for iOS 26+
-        // The main glass effect is applied via blurView using UIGlassEffect
-        if #available(iOS 26, *) {
-            // On iOS 26+, adjust close button to complement the glass background
-            closeButtonView.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.3)
-            closeButtonView.layer.shadowOpacity = 0 // Glass handles visual depth
+    // MARK: - Sheet Content
+
+    private func createSheetContent(in container: UIView, below topView: UIView) -> UIView {
+        let sheetContainer = UIStackView()
+        sheetContainer.translatesAutoresizingMaskIntoConstraints = false
+        sheetContainer.axis = .vertical
+        sheetContainer.spacing = 0
+        sheetContainer.alignment = .fill
+        container.addSubview(sheetContainer)
+
+        // Header logo (centered, 48pt for basic, 64pt for fullscreen)
+        if let logoUrl = headerLogo, !logoUrl.isEmpty {
+            let logoSize: CGFloat = modalPresentationStyle == .fullScreen ? 64 : 48
+            let logoView = UIImageView()
+            logoView.translatesAutoresizingMaskIntoConstraints = false
+            logoView.contentMode = .scaleAspectFit
+            logoView.layer.cornerRadius = 8
+            logoView.layer.cornerCurve = .continuous
+            logoView.clipsToBounds = true
+
+            let logoWrapper = UIView()
+            logoWrapper.translatesAutoresizingMaskIntoConstraints = false
+            logoWrapper.addSubview(logoView)
+
+            NSLayoutConstraint.activate([
+                logoView.centerXAnchor.constraint(equalTo: logoWrapper.centerXAnchor),
+                logoView.topAnchor.constraint(equalTo: logoWrapper.topAnchor),
+                logoView.bottomAnchor.constraint(equalTo: logoWrapper.bottomAnchor),
+                logoView.widthAnchor.constraint(equalToConstant: logoSize),
+                logoView.heightAnchor.constraint(equalToConstant: logoSize)
+            ])
+
+            sheetContainer.addArrangedSubview(logoWrapper)
+            sheetContainer.setCustomSpacing(16, after: logoWrapper)
+            loadImage(from: logoUrl, into: logoView)
         }
-        // Note: cornerCurve is set in button lazy vars for all iOS versions
+
+        // Title (centered in sheet content, not in header for sheet type)
+        let sheetTitleLabel = UILabel()
+        sheetTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheetTitleLabel.text = dialogTitle
+        let fontSize = styleOptions?.titleFontSize ?? 20
+        sheetTitleLabel.font = .systemFont(ofSize: fontSize, weight: .semibold)
+        sheetTitleLabel.textAlignment = .center
+        if let titleColor = styleOptions?.titleColor {
+            sheetTitleLabel.textColor = titleColor
+        }
+        sheetContainer.addArrangedSubview(sheetTitleLabel)
+        sheetContainer.setCustomSpacing(24, after: sheetTitleLabel)
+
+        // Rows container with rounded background
+        let rowsBackground = UIView()
+        rowsBackground.translatesAutoresizingMaskIntoConstraints = false
+        rowsBackground.backgroundColor = .secondarySystemGroupedBackground
+        var rowsCornerRadius: CGFloat = 12
+        if #available(iOS 26, *) {
+            rowsCornerRadius = 16
+        }
+        rowsBackground.layer.cornerRadius = rowsCornerRadius
+        rowsBackground.layer.cornerCurve = .continuous
+        rowsBackground.clipsToBounds = true
+
+        let rowsStack = UIStackView()
+        rowsStack.translatesAutoresizingMaskIntoConstraints = false
+        rowsStack.axis = .vertical
+        rowsStack.spacing = 0
+        rowsStack.alignment = .fill
+
+        rowsBackground.addSubview(rowsStack)
+        NSLayoutConstraint.activate([
+            rowsStack.topAnchor.constraint(equalTo: rowsBackground.topAnchor),
+            rowsStack.leadingAnchor.constraint(equalTo: rowsBackground.leadingAnchor),
+            rowsStack.trailingAnchor.constraint(equalTo: rowsBackground.trailingAnchor),
+            rowsStack.bottomAnchor.constraint(equalTo: rowsBackground.bottomAnchor)
+        ])
+
+        if let rows = sheetRows {
+            for (index, row) in rows.enumerated() {
+                let rowView = createSheetRow(row: row, isLast: index == rows.count - 1)
+                rowsStack.addArrangedSubview(rowView)
+            }
+        }
+
+        sheetContainer.addArrangedSubview(rowsBackground)
+
+        // If topView is the container itself, use topAnchor directly
+        if topView === container {
+            NSLayoutConstraint.activate([
+                sheetContainer.topAnchor.constraint(equalTo: container.topAnchor),
+                sheetContainer.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                sheetContainer.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                sheetContainer.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: 16),
+                sheetContainer.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                sheetContainer.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+            ])
+        }
+
+        return sheetContainer
+    }
+
+    private func createSheetRow(row: SheetRow, isLast: Bool) -> UIView {
+        let rowView = UIView()
+        rowView.translatesAutoresizingMaskIntoConstraints = false
+
+        let contentStack = UIStackView()
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.axis = .horizontal
+        contentStack.spacing = 12
+        contentStack.alignment = .center
+        rowView.addSubview(contentStack)
+
+        NSLayoutConstraint.activate([
+            contentStack.topAnchor.constraint(equalTo: rowView.topAnchor, constant: 16),
+            contentStack.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: 16),
+            contentStack.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -16),
+            contentStack.bottomAnchor.constraint(equalTo: rowView.bottomAnchor, constant: -16)
+        ])
+
+        // Row logo (optional, 24pt)
+        if let logoUrl = row.logo, !logoUrl.isEmpty {
+            let logoView = UIImageView()
+            logoView.translatesAutoresizingMaskIntoConstraints = false
+            logoView.contentMode = .scaleAspectFit
+            logoView.layer.cornerRadius = 4
+            logoView.layer.cornerCurve = .continuous
+            logoView.clipsToBounds = true
+
+            NSLayoutConstraint.activate([
+                logoView.widthAnchor.constraint(equalToConstant: 24),
+                logoView.heightAnchor.constraint(equalToConstant: 24)
+            ])
+
+            contentStack.addArrangedSubview(logoView)
+            loadImage(from: logoUrl, into: logoView)
+        }
+
+        // Row title
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = row.title
+        let messageFontSize = styleOptions?.messageFontSize ?? 16
+        titleLabel.font = .systemFont(ofSize: messageFontSize)
+        titleLabel.textColor = styleOptions?.messageColor ?? .label
+        titleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        contentStack.addArrangedSubview(titleLabel)
+
+        // Row value (optional, aligned right)
+        if let value = row.value, !value.isEmpty {
+            let valueLabel = UILabel()
+            valueLabel.translatesAutoresizingMaskIntoConstraints = false
+            valueLabel.text = value
+            valueLabel.font = .systemFont(ofSize: messageFontSize)
+            valueLabel.textColor = .secondaryLabel
+            valueLabel.textAlignment = .right
+            valueLabel.setContentHuggingPriority(.required, for: .horizontal)
+            contentStack.addArrangedSubview(valueLabel)
+        }
+
+        // Separator (except for last row)
+        if !isLast {
+            let separator = UIView()
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            separator.backgroundColor = .separator
+            rowView.addSubview(separator)
+
+            NSLayoutConstraint.activate([
+                separator.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: 16),
+                separator.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -16),
+                separator.bottomAnchor.constraint(equalTo: rowView.bottomAnchor),
+                separator.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale)
+            ])
+        }
+
+        return rowView
+    }
+
+    private func loadImage(from urlString: String, into imageView: UIImageView) {
+        // Check if it's a base64 data URL
+        if urlString.hasPrefix("data:") {
+            if let commaIndex = urlString.firstIndex(of: ",") {
+                let base64String = String(urlString[urlString.index(after: commaIndex)...])
+                if let imageData = Data(base64Encoded: base64String),
+                   let image = UIImage(data: imageData) {
+                    imageView.image = image
+                }
+            }
+        } else if let url = URL(string: urlString) {
+            // Load from HTTP/HTTPS URL asynchronously
+            URLSession.shared.dataTask(with: url) { data, _, _ in
+                if let data = data, let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        imageView.image = image
+                    }
+                }
+            }.resume()
+        }
+    }
+
+    private func applyLiquidGlassStyle() {
+        // Liquid Glass effects are applied at button creation time (iOS 26+)
+        // using UIButton.Configuration.glass() and .prominentGlass().
+        // No additional runtime adjustments needed.
+    }
+
+    private func configureCancelButtonForSheet() {
+        let cancelColor = styleOptions?.cancelButtonColor ?? .secondaryLabel
+        let fontSize = styleOptions?.buttonFontSize ?? 17
+
+        if #available(iOS 26, *) {
+            var config = UIButton.Configuration.plain()
+            config.title = cancelButtonTitle ?? "Cancel"
+            config.baseForegroundColor = cancelColor
+            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .systemFont(ofSize: fontSize, weight: .medium)
+                return outgoing
+            }
+            cancelButton.configuration = config
+        } else {
+            cancelButton.setTitleColor(cancelColor, for: .normal)
+            cancelButton.layer.borderWidth = 0
+        }
     }
 
     // MARK: - Actions
@@ -431,6 +796,8 @@ public class FullScreenDialogViewController: UIViewController {
             singleSelectCallback?(selectedValue, false)
         case .multiSelect:
             multiSelectCallback?(Array(selectedValues), false)
+        case .sheet:
+            sheetCallback?(true)
         }
     }
 
@@ -449,6 +816,8 @@ public class FullScreenDialogViewController: UIViewController {
             singleSelectCallback?(nil, true)
         case .multiSelect:
             multiSelectCallback?([], true)
+        case .sheet:
+            sheetCallback?(false)
         }
     }
 }
