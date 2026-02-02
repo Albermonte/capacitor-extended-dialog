@@ -16,6 +16,7 @@ public class DialogStyleOptions {
     private static final String KEY_TITLE_FONT_SIZE = "titleFontSize";
     private static final String KEY_MESSAGE_FONT_SIZE = "messageFontSize";
     private static final String KEY_BUTTON_FONT_SIZE = "buttonFontSize";
+    private static final String KEY_CONTENT_BUTTON_SPACING = "contentButtonSpacing";
 
     private Integer buttonColor;
     private Integer cancelButtonColor;
@@ -25,6 +26,7 @@ public class DialogStyleOptions {
     private Float titleFontSize;
     private Float messageFontSize;
     private Float buttonFontSize;
+    private Float contentButtonSpacing;
 
     public DialogStyleOptions() {}
 
@@ -43,34 +45,94 @@ public class DialogStyleOptions {
         return (size != null && size > 0) ? size.floatValue() : null;
     }
 
-    public Integer getButtonColor() { return buttonColor; }
-    public void setButtonColor(String hexColor) { this.buttonColor = parseColor(hexColor); }
+    private static Float parseSpacing(Double size) {
+        return (size != null && size >= 0) ? size.floatValue() : null;
+    }
 
-    public Integer getCancelButtonColor() { return cancelButtonColor; }
-    public void setCancelButtonColor(String hexColor) { this.cancelButtonColor = parseColor(hexColor); }
+    public Integer getButtonColor() {
+        return buttonColor;
+    }
 
-    public Integer getTitleColor() { return titleColor; }
-    public void setTitleColor(String hexColor) { this.titleColor = parseColor(hexColor); }
+    public void setButtonColor(String hexColor) {
+        this.buttonColor = parseColor(hexColor);
+    }
 
-    public Integer getMessageColor() { return messageColor; }
-    public void setMessageColor(String hexColor) { this.messageColor = parseColor(hexColor); }
+    public Integer getCancelButtonColor() {
+        return cancelButtonColor;
+    }
 
-    public Integer getBackgroundColor() { return backgroundColor; }
-    public void setBackgroundColor(String hexColor) { this.backgroundColor = parseColor(hexColor); }
+    public void setCancelButtonColor(String hexColor) {
+        this.cancelButtonColor = parseColor(hexColor);
+    }
 
-    public Float getTitleFontSize() { return titleFontSize; }
-    public void setTitleFontSize(Double size) { this.titleFontSize = parseSize(size); }
+    public Integer getTitleColor() {
+        return titleColor;
+    }
 
-    public Float getMessageFontSize() { return messageFontSize; }
-    public void setMessageFontSize(Double size) { this.messageFontSize = parseSize(size); }
+    public void setTitleColor(String hexColor) {
+        this.titleColor = parseColor(hexColor);
+    }
 
-    public Float getButtonFontSize() { return buttonFontSize; }
-    public void setButtonFontSize(Double size) { this.buttonFontSize = parseSize(size); }
+    public Integer getMessageColor() {
+        return messageColor;
+    }
+
+    public void setMessageColor(String hexColor) {
+        this.messageColor = parseColor(hexColor);
+    }
+
+    public Integer getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(String hexColor) {
+        this.backgroundColor = parseColor(hexColor);
+    }
+
+    public Float getTitleFontSize() {
+        return titleFontSize;
+    }
+
+    public void setTitleFontSize(Double size) {
+        this.titleFontSize = parseSize(size);
+    }
+
+    public Float getMessageFontSize() {
+        return messageFontSize;
+    }
+
+    public void setMessageFontSize(Double size) {
+        this.messageFontSize = parseSize(size);
+    }
+
+    public Float getButtonFontSize() {
+        return buttonFontSize;
+    }
+
+    public void setButtonFontSize(Double size) {
+        this.buttonFontSize = parseSize(size);
+    }
+
+    public Float getContentButtonSpacing() {
+        return contentButtonSpacing;
+    }
+
+    public void setContentButtonSpacing(Double size) {
+        this.contentButtonSpacing = parseSpacing(size);
+    }
 
     public boolean hasStyles() {
-        return buttonColor != null || cancelButtonColor != null || titleColor != null ||
-               messageColor != null || backgroundColor != null || titleFontSize != null ||
-               messageFontSize != null || buttonFontSize != null;
+        return (
+            buttonColor != null ||
+            cancelButtonColor != null ||
+            titleColor != null ||
+            messageColor != null ||
+            backgroundColor != null ||
+            titleFontSize != null ||
+            messageFontSize != null ||
+            buttonFontSize != null ||
+            contentButtonSpacing != null
+        );
     }
 
     public void writeToBundle(Bundle bundle) {
@@ -82,6 +144,7 @@ public class DialogStyleOptions {
         if (titleFontSize != null) bundle.putFloat(KEY_TITLE_FONT_SIZE, titleFontSize);
         if (messageFontSize != null) bundle.putFloat(KEY_MESSAGE_FONT_SIZE, messageFontSize);
         if (buttonFontSize != null) bundle.putFloat(KEY_BUTTON_FONT_SIZE, buttonFontSize);
+        if (contentButtonSpacing != null) bundle.putFloat(KEY_CONTENT_BUTTON_SPACING, contentButtonSpacing);
     }
 
     public static DialogStyleOptions readFromBundle(Bundle bundle) {
@@ -94,6 +157,7 @@ public class DialogStyleOptions {
         options.titleFontSize = bundle.containsKey(KEY_TITLE_FONT_SIZE) ? bundle.getFloat(KEY_TITLE_FONT_SIZE) : null;
         options.messageFontSize = bundle.containsKey(KEY_MESSAGE_FONT_SIZE) ? bundle.getFloat(KEY_MESSAGE_FONT_SIZE) : null;
         options.buttonFontSize = bundle.containsKey(KEY_BUTTON_FONT_SIZE) ? bundle.getFloat(KEY_BUTTON_FONT_SIZE) : null;
+        options.contentButtonSpacing = bundle.containsKey(KEY_CONTENT_BUTTON_SPACING) ? bundle.getFloat(KEY_CONTENT_BUTTON_SPACING) : null;
         return options;
     }
 }

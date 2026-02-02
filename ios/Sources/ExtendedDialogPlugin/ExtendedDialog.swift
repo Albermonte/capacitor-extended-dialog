@@ -21,6 +21,7 @@ public struct DialogStyleOptions {
     var titleFontSize: CGFloat?
     var messageFontSize: CGFloat?
     var buttonFontSize: CGFloat?
+    var contentButtonSpacing: CGFloat?
 
     init(
         buttonColor: String? = nil,
@@ -30,7 +31,8 @@ public struct DialogStyleOptions {
         backgroundColor: String? = nil,
         titleFontSize: Double? = nil,
         messageFontSize: Double? = nil,
-        buttonFontSize: Double? = nil
+        buttonFontSize: Double? = nil,
+        contentButtonSpacing: Double? = nil
     ) {
         self.buttonColor = Self.parseColor(buttonColor)
         self.cancelButtonColor = Self.parseColor(cancelButtonColor)
@@ -40,6 +42,7 @@ public struct DialogStyleOptions {
         self.titleFontSize = titleFontSize.map { CGFloat($0) }
         self.messageFontSize = messageFontSize.map { CGFloat($0) }
         self.buttonFontSize = buttonFontSize.map { CGFloat($0) }
+        self.contentButtonSpacing = contentButtonSpacing.map { CGFloat($0) }
     }
 
     private static func parseColor(_ hex: String?) -> UIColor? {
@@ -72,7 +75,8 @@ public struct DialogStyleOptions {
         return buttonColor != nil || cancelButtonColor != nil ||
                titleColor != nil || messageColor != nil ||
                backgroundColor != nil || titleFontSize != nil ||
-               messageFontSize != nil || buttonFontSize != nil
+               messageFontSize != nil || buttonFontSize != nil ||
+               contentButtonSpacing != nil
     }
 }
 

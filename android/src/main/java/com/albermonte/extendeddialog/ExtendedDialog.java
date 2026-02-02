@@ -111,8 +111,7 @@ public class ExtendedDialog {
         // MaterialAlertDialogBuilder uses appcompat's alertTitle, not android's
         TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
         if (titleView != null) {
-            TextViewCompat.setTextAppearance(titleView,
-                com.google.android.material.R.style.TextAppearance_Material3_HeadlineSmall);
+            TextViewCompat.setTextAppearance(titleView, com.google.android.material.R.style.TextAppearance_Material3_HeadlineSmall);
             // M3 dialog headline color: onSurface (#1D1B20)
             // Use MaterialColors for proper theme attribute resolution across different R class configurations
             int onSurfaceColor = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);
@@ -122,8 +121,7 @@ public class ExtendedDialog {
         // Apply M3 BodyMedium to message with onSurfaceVariant color
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {
-            TextViewCompat.setTextAppearance(messageView,
-                com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            TextViewCompat.setTextAppearance(messageView, com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
             // M3 dialog supporting text color: onSurfaceVariant (#49454F)
             // Use MaterialColors for proper theme attribute resolution
             int onSurfaceVariantColor = MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFF49454F);
@@ -198,8 +196,10 @@ public class ExtendedDialog {
     ) {
         activity.runOnUiThread(() -> {
             Context themedContext = getThemedContext(activity);
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext,
-                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(
+                themedContext,
+                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog
+            );
 
             if (title != null && !title.isEmpty()) {
                 builder.setTitle(title);
@@ -268,8 +268,10 @@ public class ExtendedDialog {
     ) {
         activity.runOnUiThread(() -> {
             Context themedContext = getThemedContext(activity);
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext,
-                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(
+                themedContext,
+                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog
+            );
 
             if (title != null && !title.isEmpty()) {
                 builder.setTitle(title);
@@ -370,8 +372,10 @@ public class ExtendedDialog {
     ) {
         activity.runOnUiThread(() -> {
             Context themedContext = getThemedContext(activity);
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(themedContext,
-                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(
+                themedContext,
+                R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog
+            );
 
             if (title != null && !title.isEmpty()) {
                 builder.setTitle(title);
@@ -519,8 +523,10 @@ public class ExtendedDialog {
 
                 final int[] selectedIndex = { checkedItem };
 
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity),
-                    R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(
+                    getThemedContext(activity),
+                    R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog
+                );
 
                 if (title != null && !title.isEmpty()) {
                     builder.setTitle(title);
@@ -662,8 +668,10 @@ public class ExtendedDialog {
 
                 final Set<String> resultSet = new HashSet<>(selectedSet);
 
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getThemedContext(activity),
-                    R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog);
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(
+                    getThemedContext(activity),
+                    R.style.ThemeOverlay_ExtendedDialog_MaterialAlertDialog
+                );
 
                 if (title != null && !title.isEmpty()) {
                     builder.setTitle(title);

@@ -75,7 +75,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
 
       dialog.appendChild(optionsContainer);
 
-      const buttonContainer = this.createButtonContainer();
+      const buttonContainer = this.createButtonContainer(options.contentButtonSpacing);
 
       const cancelButton = this.createButton(
         options.cancelButtonTitle ?? 'Cancel',
@@ -144,7 +144,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
 
       dialog.appendChild(optionsContainer);
 
-      const buttonContainer = this.createButtonContainer();
+      const buttonContainer = this.createButtonContainer(options.contentButtonSpacing);
 
       const cancelButton = this.createButton(
         options.cancelButtonTitle ?? 'Cancel',
@@ -226,9 +226,10 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
     return dialog;
   }
 
-  private createButtonContainer(): HTMLDivElement {
+  private createButtonContainer(contentButtonSpacing?: number): HTMLDivElement {
     const container = document.createElement('div');
-    container.style.cssText = 'display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px;';
+    const spacing = contentButtonSpacing ?? 24;
+    container.style.cssText = `display: flex; justify-content: flex-end; gap: 8px; margin-top: ${spacing}px;`;
     return container;
   }
 
@@ -272,7 +273,8 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       if (options.headerLogo) {
         const headerLogo = document.createElement('img');
         headerLogo.src = options.headerLogo;
-        headerLogo.style.cssText = 'width: 48px; height: 48px; object-fit: contain; margin-bottom: 12px; border-radius: 8px;';
+        headerLogo.style.cssText =
+          'width: 48px; height: 48px; object-fit: contain; margin-bottom: 12px; border-radius: 8px;';
         headerLogo.onerror = () => {
           headerLogo.style.display = 'none';
         };
@@ -304,7 +306,8 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         if (row.logo) {
           const rowLogo = document.createElement('img');
           rowLogo.src = row.logo;
-          rowLogo.style.cssText = 'width: 24px; height: 24px; object-fit: contain; margin-right: 12px; border-radius: 4px; flex-shrink: 0;';
+          rowLogo.style.cssText =
+            'width: 24px; height: 24px; object-fit: contain; margin-right: 12px; border-radius: 4px; flex-shrink: 0;';
           rowLogo.onerror = () => {
             rowLogo.style.display = 'none';
           };
@@ -330,8 +333,19 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
 
       dialog.appendChild(rowsContainer);
 
+      // For sheets with ≤4 rows and no explicit spacing, add extra spacing to reach ~50% viewport height
+      let sheetSpacing = options.contentButtonSpacing;
+      if (sheetSpacing === undefined && options.rows.length <= 4) {
+        const targetHeight = window.innerHeight * 0.5;
+        // Estimate content: padding(48) + header(~80) + rows(~49 each) + buttons(~44) + default spacing(24)
+        const estimatedHeight = 48 + 80 + options.rows.length * 49 + 44 + 24;
+        if (targetHeight > estimatedHeight) {
+          sheetSpacing = 24 + (targetHeight - estimatedHeight);
+        }
+      }
+
       // Button container
-      const buttonContainer = this.createButtonContainer();
+      const buttonContainer = this.createButtonContainer(sheetSpacing);
 
       const cancelButton = this.createButton(
         options.cancelButtonTitle ?? 'Cancel',

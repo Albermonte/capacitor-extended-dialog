@@ -250,8 +250,7 @@ public class FullScreenDialogFragment extends DialogFragment {
                 messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
             } else {
                 // M3 dialog supporting text: 14sp, weight 400, tracking 0.25sp
-                TextViewCompat.setTextAppearance(messageView,
-                    com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+                TextViewCompat.setTextAppearance(messageView, com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
             }
             if (styleOptions.getMessageColor() != null) {
                 messageView.setTextColor(styleOptions.getMessageColor());
@@ -293,7 +292,9 @@ public class FullScreenDialogFragment extends DialogFragment {
         buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
         buttonContainer.setGravity(Gravity.END);
         int buttonPadding = (int) (16 * density);
-        buttonContainer.setPadding(buttonPadding, buttonPadding, buttonPadding, buttonPadding);
+        float topSpacing = styleOptions.getContentButtonSpacing() != null ? styleOptions.getContentButtonSpacing() : 16f;
+        int buttonTopPadding = (int) (topSpacing * density);
+        buttonContainer.setPadding(buttonPadding, buttonTopPadding, buttonPadding, buttonPadding);
 
         // Cancel button (not shown for ALERT type)
         if (type != DialogType.ALERT) {
@@ -353,8 +354,9 @@ public class FullScreenDialogFragment extends DialogFragment {
         // Use Material 3 TextInputLayout with outlined style
         TextInputLayout textInputLayout = new TextInputLayout(ctx);
         textInputLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
-        textInputLayout.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        textInputLayout.setLayoutParams(
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        );
 
         inputField = new TextInputEditText(textInputLayout.getContext());
         inputField.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -371,15 +373,18 @@ public class FullScreenDialogFragment extends DialogFragment {
         if (focusInput) {
             inputField.requestFocus();
             // Show keyboard when dialog is shown
-            inputField.postDelayed(() -> {
-                if (getContext() != null) {
-                    android.view.inputmethod.InputMethodManager imm =
-                        (android.view.inputmethod.InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    if (imm != null) {
-                        imm.showSoftInput(inputField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            inputField.postDelayed(
+                () -> {
+                    if (getContext() != null) {
+                        android.view.inputmethod.InputMethodManager imm =
+                            (android.view.inputmethod.InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        if (imm != null) {
+                            imm.showSoftInput(inputField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                        }
                     }
-                }
-            }, 200);
+                },
+                200
+            );
         }
     }
 
@@ -403,8 +408,7 @@ public class FullScreenDialogFragment extends DialogFragment {
 
                 RadioButton radioButton = new RadioButton(ctx);
                 radioButton.setText(label);
-                TextViewCompat.setTextAppearance(radioButton,
-                    com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+                TextViewCompat.setTextAppearance(radioButton, com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
                 // M3 list item text color: onSurface (#1D1B20)
                 // Use android.R.attr.textColorPrimary which maps to onSurface in M3 themes
                 int onSurfaceColor = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);
@@ -465,8 +469,7 @@ public class FullScreenDialogFragment extends DialogFragment {
 
                 CheckBox checkBox = new CheckBox(ctx);
                 checkBox.setText(label);
-                TextViewCompat.setTextAppearance(checkBox,
-                    com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+                TextViewCompat.setTextAppearance(checkBox, com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
                 // M3 list item text color: onSurface (#1D1B20)
                 // Use android.R.attr.textColorPrimary which maps to onSurface in M3 themes
                 int onSurfaceColor = MaterialColors.getColor(ctx, android.R.attr.textColorPrimary, 0xFF1D1B20);

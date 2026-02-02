@@ -39,6 +39,28 @@ export interface DialogStyleOptions {
    * Font size for the button text in sp/pt (e.g., 14)
    */
   buttonFontSize?: number;
+  /**
+   * Vertical spacing between dialog content and the confirm/cancel buttons in dp/pt/px (e.g., 16).
+   * Only applies to fullscreen and sheet modes.
+   *
+   * @example
+   * // Fullscreen confirm with extra spacing between content and buttons
+   * await ExtendedDialog.confirm({
+   *   title: 'Delete Account',
+   *   message: 'This action cannot be undone.',
+   *   mode: 'fullscreen',
+   *   contentButtonSpacing: 32,
+   * });
+   *
+   * @example
+   * // Sheet with tight spacing
+   * await ExtendedDialog.sheet({
+   *   title: 'Order Summary',
+   *   rows: [{ title: 'Total', value: '$9.99' }],
+   *   contentButtonSpacing: 8,
+   * });
+   */
+  contentButtonSpacing?: number;
 }
 
 export interface BaseDialogOptions extends DialogStyleOptions {

@@ -1,7 +1,8 @@
 package com.albermonte.extendeddialog;
 
-import android.content.DialogInterface;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -18,7 +19,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.app.Dialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.TextViewCompat;
@@ -151,8 +151,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
 
         // ScrollView for content
         ScrollView scrollView = new ScrollView(ctx);
-        scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         LinearLayout contentLayout = new LinearLayout(ctx);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
@@ -176,8 +175,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         if (title != null && !title.isEmpty()) {
             TextView titleView = new TextView(ctx);
             titleView.setText(title);
-            TextViewCompat.setTextAppearance(titleView,
-                com.google.android.material.R.style.TextAppearance_Material3_HeadlineSmall);
+            TextViewCompat.setTextAppearance(titleView, com.google.android.material.R.style.TextAppearance_Material3_HeadlineSmall);
             if (styleOptions.getTitleColor() != null) {
                 titleView.setTextColor(styleOptions.getTitleColor());
             } else {
@@ -214,10 +212,37 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         scrollView.addView(contentLayout);
         root.addView(scrollView);
 
+        // Count rows for minimum height calculation
+        int rowCount = 0;
+        if (rowsJson != null) {
+            try {
+                JSONArray countRows = new JSONArray(rowsJson);
+                rowCount = countRows.length();
+            } catch (JSONException e) {
+                // ignore
+            }
+        }
+
         // Button container pinned at bottom
         LinearLayout buttonContainer = new LinearLayout(ctx);
         buttonContainer.setOrientation(LinearLayout.VERTICAL);
-        buttonContainer.setPadding(horizontalPadding, (int) (12 * density), horizontalPadding, (int) (4 * density));
+        float topSpacing = styleOptions.getContentButtonSpacing() != null ? styleOptions.getContentButtonSpacing() : 12f;
+
+        // For sheets with ≤4 rows and no explicit spacing, add extra spacing to reach ~50% screen height
+        if (rowCount <= 4 && styleOptions.getContentButtonSpacing() == null) {
+            int screenHeight = getResources().getDisplayMetrics().heightPixels;
+            float targetHeight = screenHeight * 0.5f;
+            // Estimate current content height: header + title + rows + buttons
+            float estimatedContent = (16 + 8 + 48 + 12 + 20) * density; // drag handle + logo area + title + margins
+            estimatedContent += rowCount * 56 * density; // ~56dp per row
+            estimatedContent += (48 + 12 + 48 + 4) * density; // buttons + padding
+            estimatedContent += topSpacing * density;
+            if (targetHeight > estimatedContent) {
+                topSpacing += (targetHeight - estimatedContent) / density;
+            }
+        }
+
+        buttonContainer.setPadding(horizontalPadding, (int) (topSpacing * density), horizontalPadding, (int) (4 * density));
 
         int primaryColor = MaterialColors.getColor(ctx, android.R.attr.colorPrimary, 0xFF6750A4);
 
@@ -228,7 +253,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         // Confirm button (filled style with purple background, white text)
         MaterialButton confirmBtn = new MaterialButton(ctx);
         confirmBtn.setText(confirmButton);
-        confirmBtn.setOnClickListener(v -> {
+        confirmBtn.setOnClickListener((v) -> {
             handleConfirm();
             dismiss();
         });
@@ -246,14 +271,16 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             confirmBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
         }
         LinearLayout.LayoutParams confirmParams = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
         confirmBtn.setLayoutParams(confirmParams);
         buttonContainer.addView(confirmBtn);
 
         // Cancel button (text-only style, no background fill)
         MaterialButton cancelBtn = new MaterialButton(ctx, null, android.R.attr.borderlessButtonStyle);
         cancelBtn.setText(cancelButton);
-        cancelBtn.setOnClickListener(v -> {
+        cancelBtn.setOnClickListener((v) -> {
             handleCancel();
             dismiss();
         });
@@ -270,7 +297,9 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             cancelBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
         }
         LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
         cancelBtn.setLayoutParams(cancelParams);
         buttonContainer.addView(cancelBtn);
 
@@ -290,7 +319,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
         if (dialog == null) return;
 
-        dialog.setOnShowListener(dialogInterface -> {
+        dialog.setOnShowListener((dialogInterface) -> {
             BottomSheetDialog d = (BottomSheetDialog) dialogInterface;
             FrameLayout bottomSheet = d.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet == null) return;
@@ -315,12 +344,20 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         });
     }
 
-    private LinearLayout createSheetRow(Context context, JSONObject row, DialogStyleOptions styleOptions, float density, boolean showDivider) throws JSONException {
+    private LinearLayout createSheetRow(
+        Context context,
+        JSONObject row,
+        DialogStyleOptions styleOptions,
+        float density,
+        boolean showDivider
+    ) throws JSONException {
         LinearLayout rowLayout = new LinearLayout(context);
         rowLayout.setOrientation(LinearLayout.HORIZONTAL);
         rowLayout.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
         rowLayout.setLayoutParams(rowParams);
         rowLayout.setPadding(0, (int) (8 * density), 0, (int) (8 * density));
 
@@ -338,8 +375,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         // Row title
         TextView rowTitle = new TextView(context);
         rowTitle.setText(row.getString("title"));
-        TextViewCompat.setTextAppearance(rowTitle,
-            com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
+        TextViewCompat.setTextAppearance(rowTitle, com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
         if (styleOptions.getMessageColor() != null) {
             rowTitle.setTextColor(styleOptions.getMessageColor());
         } else {
@@ -357,8 +393,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         if (row.has("value") && !row.getString("value").isEmpty()) {
             TextView rowValue = new TextView(context);
             rowValue.setText(row.getString("value"));
-            TextViewCompat.setTextAppearance(rowValue,
-                com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            TextViewCompat.setTextAppearance(rowValue, com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
             int onSurfaceVariantColor = MaterialColors.getColor(context, android.R.attr.textColorSecondary, 0xFF49454F);
             rowValue.setTextColor(onSurfaceVariantColor);
             rowValue.setGravity(Gravity.END);
@@ -381,7 +416,9 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             View divider = new View(context);
             divider.setBackgroundColor(MaterialColors.getColor(context, android.R.attr.listDivider, 0xFFE0E0E0));
             LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, (int) (1 * density));
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (int) (1 * density)
+            );
             divider.setLayoutParams(dividerParams);
             container.addView(divider);
         }

@@ -253,10 +253,25 @@ public class FullScreenDialogViewController: UIViewController {
             }
         }
 
-        let spacingToButtons: CGFloat = 16
+        var spacingToButtons: CGFloat = styleOptions?.contentButtonSpacing ?? 16
         let buttonStackHeight: CGFloat = (dialogType == .sheet && cancelButtonTitle != nil) ? 112 : 50
         let bottomPadding: CGFloat = 4
         let grabberAllowance: CGFloat = 20
+
+        // For sheets with ≤4 rows and no explicit spacing, add extra spacing to reach ~50% screen height
+        if dialogType == .sheet && styleOptions?.contentButtonSpacing == nil {
+            let rowCount = sheetRows?.count ?? 0
+            if rowCount <= 4 {
+                let screenHeight = UIScreen.main.bounds.height
+                let targetHeight = screenHeight * 0.5
+                let baseHeight = safeTop + headerTop + headerHeight + spacingAfterHeader
+                    + contentHeight + spacingToButtons + buttonStackHeight + bottomPadding
+                    + safeBottom + grabberAllowance
+                if targetHeight > baseHeight {
+                    spacingToButtons += targetHeight - baseHeight
+                }
+            }
+        }
 
         let totalHeight = safeTop + headerTop + headerHeight + spacingAfterHeader
             + contentHeight + spacingToButtons + buttonStackHeight + bottomPadding
@@ -487,7 +502,7 @@ public class FullScreenDialogViewController: UIViewController {
                 scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 8),
                 scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
                 scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-                scrollView.bottomAnchor.constraint(equalTo: buttonStack.topAnchor, constant: -16),
+                scrollView.bottomAnchor.constraint(equalTo: buttonStack.topAnchor, constant: -(styleOptions?.contentButtonSpacing ?? 16)),
 
                 // Content view pinned to scroll view's content guide
                 contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
@@ -505,7 +520,7 @@ public class FullScreenDialogViewController: UIViewController {
             // Content bottom constraint - ensure content stays above buttons
             NSLayoutConstraint.activate([
                 contentView.bottomAnchor.constraint(equalTo: lastView.bottomAnchor),
-                contentView.bottomAnchor.constraint(lessThanOrEqualTo: buttonStack.topAnchor, constant: -16)
+                contentView.bottomAnchor.constraint(lessThanOrEqualTo: buttonStack.topAnchor, constant: -(styleOptions?.contentButtonSpacing ?? 16))
             ])
         }
     }
@@ -687,7 +702,10 @@ public class FullScreenDialogViewController: UIViewController {
         let messageFontSize = styleOptions?.messageFontSize ?? 16
         titleLabel.font = .systemFont(ofSize: messageFontSize)
         titleLabel.textColor = styleOptions?.messageColor ?? .label
+        titleLabel.numberOfLines = 1
+        titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        titleLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         contentStack.addArrangedSubview(titleLabel)
 
         // Row value (optional, aligned right)
@@ -698,7 +716,10 @@ public class FullScreenDialogViewController: UIViewController {
             valueLabel.font = .systemFont(ofSize: messageFontSize)
             valueLabel.textColor = .secondaryLabel
             valueLabel.textAlignment = .right
+            valueLabel.numberOfLines = 2
+            valueLabel.lineBreakMode = .byTruncatingTail
             valueLabel.setContentHuggingPriority(.required, for: .horizontal)
+            valueLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
             contentStack.addArrangedSubview(valueLabel)
         }
 

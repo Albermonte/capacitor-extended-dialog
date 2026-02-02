@@ -25,7 +25,8 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             backgroundColor: call.getString("backgroundColor"),
             titleFontSize: call.getDouble("titleFontSize"),
             messageFontSize: call.getDouble("messageFontSize"),
-            buttonFontSize: call.getDouble("buttonFontSize")
+            buttonFontSize: call.getDouble("buttonFontSize"),
+            contentButtonSpacing: call.getDouble("contentButtonSpacing")
         )
     }
 
