@@ -1,6 +1,6 @@
 # capacitor-extended-dialog
 
-Show native dialogs in Capacitor with Material 3 and Liquid Glass UI
+A Capacitor 6+ plugin for native dialogs — alerts, confirms, prompts, single/multi-select, and structured sheets — with Material 3 styling on Android, Liquid Glass on iOS, and a web fallback. Supports basic and fullscreen presentation modes with customizable colors, fonts, and layout.
 
 ## Install
 
