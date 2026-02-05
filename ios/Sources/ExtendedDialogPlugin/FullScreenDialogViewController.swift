@@ -45,6 +45,7 @@ public class FullScreenDialogViewController: UIViewController {
     private var tableView: UITableView?
     private var dismissed = false
     private var buttonStackBottomConstraint: NSLayoutConstraint?
+    private var contentContainer: UIView?
 
     // MARK: - UI Components
 
@@ -235,6 +236,22 @@ public class FullScreenDialogViewController: UIViewController {
         calculatePreferredContentSize()
     }
 
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        guard modalPresentationStyle == .pageSheet else { return }
+
+        let previousHeight = preferredContentSize.height
+        calculatePreferredContentSize()
+
+        if #available(iOS 16.0, *) {
+            if let sheet = sheetPresentationController,
+               abs(preferredContentSize.height - previousHeight) > 0.5 {
+                sheet.invalidateDetents()
+            }
+        }
+    }
+
     private func calculatePreferredContentSize() {
         view.layoutIfNeeded()
 
@@ -246,12 +263,26 @@ public class FullScreenDialogViewController: UIViewController {
         let headerHeight: CGFloat = (isSheetLike && modalPresentationStyle == .pageSheet) ? 12 : 64
         let spacingAfterHeader: CGFloat = 8
 
-        // Measure scroll content height for sheets, or content height for other types
+        // Measure content height from layout to include table/message in multi-select
         var contentHeight: CGFloat = 0
-        for subview in view.subviews {
-            if let scrollView = subview as? UIScrollView {
-                contentHeight = scrollView.contentSize.height
-                break
+        if let container = contentContainer {
+            container.layoutIfNeeded()
+            let fallbackWidth = max(view.bounds.width - 48, 0)
+            let targetWidth = container.bounds.width > 0 ? container.bounds.width : fallbackWidth
+            let targetSize = CGSize(width: targetWidth, height: UIView.layoutFittingCompressedSize.height)
+            contentHeight = container.systemLayoutSizeFitting(
+                targetSize,
+                withHorizontalFittingPriority: .required,
+                verticalFittingPriority: .fittingSizeLevel
+            ).height
+        }
+
+        if contentHeight <= 0 {
+            for subview in view.subviews {
+                if let scrollView = subview as? UIScrollView {
+                    contentHeight = scrollView.contentSize.height
+                    break
+                }
             }
         }
 
@@ -388,6 +419,7 @@ public class FullScreenDialogViewController: UIViewController {
         let contentView = UIView()
         contentView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(contentView)
+        contentContainer = contentView
 
         NSLayoutConstraint.activate([
             contentView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 8),
