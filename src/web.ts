@@ -275,8 +275,16 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       if (options.headerLogo) {
         const headerLogo = document.createElement('img');
         headerLogo.src = options.headerLogo;
-        headerLogo.style.cssText =
-          'width: 48px; height: 48px; object-fit: contain; margin-bottom: 12px; border-radius: 8px;';
+        // Apply corner radius (default 8px, -1 for circle)
+        const radiusPx = options.headerLogoCornerRadius;
+        let borderRadius: string;
+        if (radiusPx !== undefined && radiusPx < 0) {
+          // -1 means full circle
+          borderRadius = '50%';
+        } else {
+          borderRadius = `${radiusPx ?? 8}px`;
+        }
+        headerLogo.style.cssText = `width: 48px; height: 48px; object-fit: contain; margin-bottom: 12px; border-radius: ${borderRadius};`;
         headerLogo.onerror = () => {
           headerLogo.style.display = 'none';
         };
@@ -389,7 +397,16 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         const headerLogo = document.createElement('img');
         headerLogo.src = options.headerLogo;
         const logoSize = options.mode === 'fullscreen' ? 64 : 48;
-        headerLogo.style.cssText = `width: ${logoSize}px; height: ${logoSize}px; object-fit: contain; margin: 0 auto 16px auto; border-radius: 8px;`;
+        // Apply corner radius (default 8px, -1 for circle)
+        const radiusPx = options.headerLogoCornerRadius;
+        let borderRadius: string;
+        if (radiusPx !== undefined && radiusPx < 0) {
+          // -1 means full circle
+          borderRadius = '50%';
+        } else {
+          borderRadius = `${radiusPx ?? 8}px`;
+        }
+        headerLogo.style.cssText = `width: ${logoSize}px; height: ${logoSize}px; object-fit: contain; margin: 0 auto 16px auto; border-radius: ${borderRadius};`;
         headerLogo.onerror = () => {
           headerLogo.style.display = 'none';
         };

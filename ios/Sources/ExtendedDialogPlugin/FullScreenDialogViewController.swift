@@ -579,7 +579,20 @@ public class FullScreenDialogViewController: UIViewController {
             let logoView = UIImageView()
             logoView.translatesAutoresizingMaskIntoConstraints = false
             logoView.contentMode = .scaleAspectFit
-            logoView.layer.cornerRadius = 8
+
+            // Apply corner radius (default 8pt, -1 for circle)
+            let radiusPt: CGFloat
+            if let customRadius = styleOptions?.headerLogoCornerRadius {
+                if customRadius < 0 {
+                    // -1 means full circle: radius = half of logo size
+                    radiusPt = logoSize / 2
+                } else {
+                    radiusPt = customRadius
+                }
+            } else {
+                radiusPt = 8
+            }
+            logoView.layer.cornerRadius = radiusPt
             logoView.layer.cornerCurve = .continuous
             logoView.clipsToBounds = true
 
@@ -680,7 +693,20 @@ public class FullScreenDialogViewController: UIViewController {
             let logoView = UIImageView()
             logoView.translatesAutoresizingMaskIntoConstraints = false
             logoView.contentMode = .scaleAspectFit
-            logoView.layer.cornerRadius = 8
+
+            // Apply corner radius (default 8pt, -1 for circle)
+            let radiusPt: CGFloat
+            if let customRadius = styleOptions?.headerLogoCornerRadius {
+                if customRadius < 0 {
+                    // -1 means full circle: radius = half of logo size
+                    radiusPt = logoSize / 2
+                } else {
+                    radiusPt = customRadius
+                }
+            } else {
+                radiusPt = 8
+            }
+            logoView.layer.cornerRadius = radiusPt
             logoView.layer.cornerCurve = .continuous
             logoView.clipsToBounds = true
 

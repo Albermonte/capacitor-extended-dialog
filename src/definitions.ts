@@ -61,6 +61,42 @@ export interface DialogStyleOptions {
    * });
    */
   contentButtonSpacing?: number;
+  /**
+   * Corner radius for the header logo in sheet dialogs (in dp/pt/px).
+   * - Positive number: specific radius (e.g., 12)
+   * - 0: square corners (no rounding)
+   * - -1: full circle (radius = half of logo size)
+   *
+   * @default 8
+   *
+   * @example
+   * // Custom rounded corners (12px)
+   * await ExtendedDialog.sheet({
+   *   title: 'Settings',
+   *   headerLogo: 'https://example.com/logo.png',
+   *   headerLogoCornerRadius: 12,
+   *   rows: [],
+   * });
+   *
+   * @example
+   * // Full circle logo
+   * await ExtendedDialog.sheet({
+   *   title: 'Profile',
+   *   headerLogo: 'https://example.com/avatar.png',
+   *   headerLogoCornerRadius: -1,
+   *   rows: [],
+   * });
+   *
+   * @example
+   * // Square logo (no rounding)
+   * await ExtendedDialog.sheet({
+   *   title: 'Document',
+   *   headerLogo: 'https://example.com/icon.png',
+   *   headerLogoCornerRadius: 0,
+   *   rows: [],
+   * });
+   */
+  headerLogoCornerRadius?: number;
 }
 
 export interface BaseDialogOptions extends DialogStyleOptions {

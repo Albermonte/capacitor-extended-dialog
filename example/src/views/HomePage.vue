@@ -225,6 +225,24 @@
             <p>Custom colors and fonts</p>
           </ion-label>
         </ion-item>
+        <ion-item button @click="showSheetWithCircleLogo()">
+          <ion-label>
+            <h2>Sheet with Circle Logo</h2>
+            <p>Header logo with full circle radius (-1)</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showSheetWithCustomRadius()">
+          <ion-label>
+            <h2>Sheet with Custom Radius</h2>
+            <p>Header logo with 16px corner radius</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showSheetWithSquareLogo()">
+          <ion-label>
+            <h2>Sheet with Square Logo</h2>
+            <p>Header logo with no rounding (0)</p>
+          </ion-label>
+        </ion-item>
       </ion-list>
 
       <!-- Bug Fix Tests Section -->
@@ -782,6 +800,66 @@ async function showStyledSheet() {
   });
   lastResult.value = {
     type: 'styledSheet',
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithCircleLogo() {
+  const result = await ExtendedDialog.sheet({
+    title: 'User Profile',
+    headerLogo: 'https://picsum.photos/seed/avatar/80',
+    rows: [
+      { title: 'Name', value: 'Jane Smith' },
+      { title: 'Role', value: 'Administrator' },
+      { title: 'Status', value: 'Active' }
+    ],
+    confirmButtonTitle: 'View Profile',
+    cancelButtonTitle: 'Close',
+    headerLogoCornerRadius: -1 // Full circle
+  });
+  lastResult.value = {
+    type: 'sheetCircleLogo',
+    headerLogoCornerRadius: -1,
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithCustomRadius() {
+  const result = await ExtendedDialog.sheet({
+    title: 'App Settings',
+    headerLogo: 'https://picsum.photos/seed/settings/80',
+    rows: [
+      { title: 'Notifications', value: 'Enabled' },
+      { title: 'Dark Mode', value: 'System' },
+      { title: 'Language', value: 'English' }
+    ],
+    confirmButtonTitle: 'Save',
+    cancelButtonTitle: 'Cancel',
+    headerLogoCornerRadius: 16 // Custom 16px radius
+  });
+  lastResult.value = {
+    type: 'sheetCustomRadius',
+    headerLogoCornerRadius: 16,
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithSquareLogo() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Document Preview',
+    headerLogo: 'https://picsum.photos/seed/document/80',
+    rows: [
+      { title: 'File', value: 'Report.pdf' },
+      { title: 'Size', value: '2.4 MB' },
+      { title: 'Modified', value: 'Today' }
+    ],
+    confirmButtonTitle: 'Open',
+    cancelButtonTitle: 'Cancel',
+    headerLogoCornerRadius: 0 // Square corners
+  });
+  lastResult.value = {
+    type: 'sheetSquareLogo',
+    headerLogoCornerRadius: 0,
     confirmed: result.confirmed
   };
 }

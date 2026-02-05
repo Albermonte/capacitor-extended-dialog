@@ -27,7 +27,8 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             titleFontSize: call.getDouble("titleFontSize"),
             messageFontSize: call.getDouble("messageFontSize"),
             buttonFontSize: call.getDouble("buttonFontSize"),
-            contentButtonSpacing: call.getDouble("contentButtonSpacing")
+            contentButtonSpacing: call.getDouble("contentButtonSpacing"),
+            headerLogoCornerRadius: call.getDouble("headerLogoCornerRadius")
         )
     }
 

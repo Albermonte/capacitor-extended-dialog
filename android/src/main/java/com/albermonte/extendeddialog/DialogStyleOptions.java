@@ -17,6 +17,7 @@ public class DialogStyleOptions {
     private static final String KEY_MESSAGE_FONT_SIZE = "messageFontSize";
     private static final String KEY_BUTTON_FONT_SIZE = "buttonFontSize";
     private static final String KEY_CONTENT_BUTTON_SPACING = "contentButtonSpacing";
+    private static final String KEY_HEADER_LOGO_CORNER_RADIUS = "headerLogoCornerRadius";
 
     private Integer buttonColor;
     private Integer cancelButtonColor;
@@ -27,6 +28,7 @@ public class DialogStyleOptions {
     private Float messageFontSize;
     private Float buttonFontSize;
     private Float contentButtonSpacing;
+    private Float headerLogoCornerRadius;
 
     public DialogStyleOptions() {}
 
@@ -121,6 +123,15 @@ public class DialogStyleOptions {
         this.contentButtonSpacing = parseSpacing(size);
     }
 
+    public Float getHeaderLogoCornerRadius() {
+        return headerLogoCornerRadius;
+    }
+
+    public void setHeaderLogoCornerRadius(Double radius) {
+        // Allow any value: positive for custom radius, 0 for square, -1 for circle
+        this.headerLogoCornerRadius = radius != null ? radius.floatValue() : null;
+    }
+
     public boolean hasStyles() {
         return (
             buttonColor != null ||
@@ -131,7 +142,8 @@ public class DialogStyleOptions {
             titleFontSize != null ||
             messageFontSize != null ||
             buttonFontSize != null ||
-            contentButtonSpacing != null
+            contentButtonSpacing != null ||
+            headerLogoCornerRadius != null
         );
     }
 
@@ -145,6 +157,7 @@ public class DialogStyleOptions {
         if (messageFontSize != null) bundle.putFloat(KEY_MESSAGE_FONT_SIZE, messageFontSize);
         if (buttonFontSize != null) bundle.putFloat(KEY_BUTTON_FONT_SIZE, buttonFontSize);
         if (contentButtonSpacing != null) bundle.putFloat(KEY_CONTENT_BUTTON_SPACING, contentButtonSpacing);
+        if (headerLogoCornerRadius != null) bundle.putFloat(KEY_HEADER_LOGO_CORNER_RADIUS, headerLogoCornerRadius);
     }
 
     public static DialogStyleOptions readFromBundle(Bundle bundle) {
@@ -158,6 +171,7 @@ public class DialogStyleOptions {
         options.messageFontSize = bundle.containsKey(KEY_MESSAGE_FONT_SIZE) ? bundle.getFloat(KEY_MESSAGE_FONT_SIZE) : null;
         options.buttonFontSize = bundle.containsKey(KEY_BUTTON_FONT_SIZE) ? bundle.getFloat(KEY_BUTTON_FONT_SIZE) : null;
         options.contentButtonSpacing = bundle.containsKey(KEY_CONTENT_BUTTON_SPACING) ? bundle.getFloat(KEY_CONTENT_BUTTON_SPACING) : null;
+        options.headerLogoCornerRadius = bundle.containsKey(KEY_HEADER_LOGO_CORNER_RADIUS) ? bundle.getFloat(KEY_HEADER_LOGO_CORNER_RADIUS) : null;
         return options;
     }
 }

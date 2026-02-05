@@ -134,6 +134,12 @@ All dialogs accept optional `DialogStyleOptions` for customization:
 - `titleFontSize` - Title font size in sp/pt
 - `messageFontSize` - Message font size in sp/pt
 - `buttonFontSize` - Button font size in sp/pt
+- `contentButtonSpacing` - Spacing between content and buttons in dp/pt
+- `headerLogoCornerRadius` - Corner radius for header logo in sheet dialogs:
+  - Positive number (e.g., `12`): Custom radius in dp/pt/px
+  - `0`: Square corners (no rounding)
+  - `-1`: Full circle (radius = half of logo size)
+  - Default: `8` if not specified
 
 ### Key Files for Adding New Options
 When adding new style options, update these files:
@@ -142,10 +148,11 @@ When adding new style options, update these files:
 3. `android/.../ExtendedDialogPlugin.java` - Extract option from call using `extractStyleOptions()`
 4. `android/.../ExtendedDialog.java` - Apply to basic dialogs
 5. `android/.../FullScreenDialogFragment.java` - Apply to fullscreen dialogs (uses `DialogStyleOptions.readFromBundle()`)
-6. `ios/.../ExtendedDialog.swift` - iOS `DialogStyleOptions` struct and basic dialogs
-7. `ios/.../ExtendedDialogPlugin.swift` - Extract option from call
-8. `ios/.../FullScreenDialogViewController.swift` - Apply to fullscreen dialogs
-9. `src/web.ts` - Web fallback implementation
+6. `android/.../SheetBottomDialogFragment.java` - Apply to sheet dialogs (uses `DialogStyleOptions.readFromBundle()`)
+7. `ios/.../ExtendedDialog.swift` - iOS `DialogStyleOptions` struct and basic dialogs
+8. `ios/.../ExtendedDialogPlugin.swift` - Extract option from call
+9. `ios/.../FullScreenDialogViewController.swift` - Apply to fullscreen dialogs and sheet dialogs
+10. `src/web.ts` - Web fallback implementation
 
 ### Key Dependencies
 - Android: Material Components (`com.google.android.material:material:1.12.0`)

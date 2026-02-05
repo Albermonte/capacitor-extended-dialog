@@ -199,6 +199,27 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             logoParams.gravity = Gravity.CENTER_HORIZONTAL;
             logoParams.bottomMargin = (int) (12 * density);
             logoView.setLayoutParams(logoParams);
+
+            // Apply corner radius (default 8dp, -1 for circle)
+            Float cornerRadius = styleOptions.getHeaderLogoCornerRadius();
+            float radiusDp = cornerRadius != null ? cornerRadius : 8f;
+            float radiusPx;
+            if (radiusDp < 0) {
+                // -1 means full circle: radius = half of logo size
+                radiusPx = logoSize / 2f;
+            } else {
+                radiusPx = radiusDp * density;
+            }
+            if (radiusPx > 0) {
+                logoView.setClipToOutline(true);
+                logoView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                    @Override
+                    public void getOutline(android.view.View view, android.graphics.Outline outline) {
+                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+                    }
+                });
+            }
+
             headerLayout.addView(logoView);
             loadImageAsync(logoView, headerLogo);
         }

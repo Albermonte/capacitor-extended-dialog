@@ -26,6 +26,7 @@ public class ExtendedDialogPlugin extends Plugin {
         styleOptions.setMessageFontSize(call.getDouble("messageFontSize"));
         styleOptions.setButtonFontSize(call.getDouble("buttonFontSize"));
         styleOptions.setContentButtonSpacing(call.getDouble("contentButtonSpacing"));
+        styleOptions.setHeaderLogoCornerRadius(call.getDouble("headerLogoCornerRadius"));
         return styleOptions;
     }
 
