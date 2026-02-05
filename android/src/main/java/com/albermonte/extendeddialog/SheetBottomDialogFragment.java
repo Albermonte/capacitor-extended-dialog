@@ -42,13 +42,19 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
     private static final String ARG_TITLE = "title";
     private static final String ARG_HEADER_LOGO = "headerLogo";
     private static final String ARG_ROWS = "rows";
+    private static final String ARG_MESSAGE = "message";
     private static final String ARG_CONFIRM_BUTTON = "confirmButton";
     private static final String ARG_CANCEL_BUTTON = "cancelButton";
     private static final String ARG_FULLSCREEN = "fullscreen";
+    private static final String ARG_IS_MESSAGE_SHEET = "isMessageSheet";
 
     private ExtendedDialog.SheetCallback sheetCallback;
     private boolean dismissed = false;
     private Context themedContext;
+    private ScrollView scrollView;
+    private LinearLayout headerLayout;
+    private LinearLayout bodyLayout;
+    private LinearLayout buttonContainer;
 
     public static SheetBottomDialogFragment newInstance(
         String title,
@@ -67,6 +73,32 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         args.putString(ARG_CONFIRM_BUTTON, confirmButton);
         args.putString(ARG_CANCEL_BUTTON, cancelButton);
         args.putBoolean(ARG_FULLSCREEN, fullscreen);
+        args.putBoolean(ARG_IS_MESSAGE_SHEET, false);
+        if (styleOptions != null) {
+            styleOptions.writeToBundle(args);
+        }
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static SheetBottomDialogFragment newMessageInstance(
+        String title,
+        String headerLogo,
+        String message,
+        String confirmButton,
+        String cancelButton,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions
+    ) {
+        SheetBottomDialogFragment fragment = new SheetBottomDialogFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_TITLE, title);
+        args.putString(ARG_HEADER_LOGO, headerLogo);
+        args.putString(ARG_MESSAGE, message);
+        args.putString(ARG_CONFIRM_BUTTON, confirmButton);
+        args.putString(ARG_CANCEL_BUTTON, cancelButton);
+        args.putBoolean(ARG_FULLSCREEN, fullscreen);
+        args.putBoolean(ARG_IS_MESSAGE_SHEET, true);
         if (styleOptions != null) {
             styleOptions.writeToBundle(args);
         }
@@ -104,9 +136,11 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         String title = args.getString(ARG_TITLE, "");
         String headerLogo = args.getString(ARG_HEADER_LOGO);
         String rowsJson = args.getString(ARG_ROWS);
+        String message = args.getString(ARG_MESSAGE, "");
         String confirmButton = args.getString(ARG_CONFIRM_BUTTON, "Confirm");
         String cancelButton = args.getString(ARG_CANCEL_BUTTON, "Cancel");
         boolean fullscreen = args.getBoolean(ARG_FULLSCREEN, false);
+        boolean isMessageSheet = args.getBoolean(ARG_IS_MESSAGE_SHEET, false);
         DialogStyleOptions styleOptions = DialogStyleOptions.readFromBundle(args);
 
         Context ctx = getThemedContext();
@@ -149,15 +183,13 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             root.addView(dragHandle);
         }
 
-        // ScrollView for content
-        ScrollView scrollView = new ScrollView(ctx);
-        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-
-        LinearLayout contentLayout = new LinearLayout(ctx);
-        contentLayout.setOrientation(LinearLayout.VERTICAL);
         int horizontalPadding = (int) (24 * density);
         int verticalPadding = (int) (16 * density);
-        contentLayout.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+
+        // Header (logo + title) - not scrollable
+        headerLayout = new LinearLayout(ctx);
+        headerLayout.setOrientation(LinearLayout.VERTICAL);
+        headerLayout.setPadding(horizontalPadding, verticalPadding, horizontalPadding, (int) (8 * density));
 
         // Header logo
         if (headerLogo != null && !headerLogo.isEmpty()) {
@@ -167,7 +199,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             logoParams.gravity = Gravity.CENTER_HORIZONTAL;
             logoParams.bottomMargin = (int) (12 * density);
             logoView.setLayoutParams(logoParams);
-            contentLayout.addView(logoView);
+            headerLayout.addView(logoView);
             loadImageAsync(logoView, headerLogo);
         }
 
@@ -192,55 +224,79 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             );
             titleParams.bottomMargin = (int) (20 * density);
             titleView.setLayoutParams(titleParams);
-            contentLayout.addView(titleView);
+            headerLayout.addView(titleView);
+        }
+        root.addView(headerLayout);
+
+        // ScrollView for body content (rows/message only)
+        scrollView = new ScrollView(ctx);
+        scrollView.setFillViewport(true);
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        bodyLayout = new LinearLayout(ctx);
+        bodyLayout.setOrientation(LinearLayout.VERTICAL);
+        bodyLayout.setPadding(horizontalPadding, 0, horizontalPadding, verticalPadding);
+
+        // Message (for message sheet)
+        if (isMessageSheet && message != null && !message.isEmpty()) {
+            LinearLayout messageContainer = new LinearLayout(ctx);
+            messageContainer.setOrientation(LinearLayout.VERTICAL);
+            int messagePadding = (int) (16 * density);
+            messageContainer.setPadding(messagePadding, messagePadding, messagePadding, messagePadding);
+
+            ShapeAppearanceModel messageShape = ShapeAppearanceModel.builder()
+                .setAllCornerSizes(12 * density)
+                .build();
+            MaterialShapeDrawable messageBackground = new MaterialShapeDrawable(messageShape);
+            int surfaceVariant = MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFE7E0EC);
+            messageBackground.setFillColor(ColorStateList.valueOf(surfaceVariant));
+            messageContainer.setBackground(messageBackground);
+
+            TextView messageView = new TextView(ctx);
+            messageView.setText(message);
+            messageView.setLineSpacing(0, 1.2f);
+            TextViewCompat.setTextAppearance(messageView, com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            if (styleOptions.getMessageColor() != null) {
+                messageView.setTextColor(styleOptions.getMessageColor());
+            } else {
+                int onSurfaceVariantColor = MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFF49454F);
+                messageView.setTextColor(onSurfaceVariantColor);
+            }
+            if (styleOptions.getMessageFontSize() != null) {
+                messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
+            }
+            messageContainer.addView(messageView);
+
+            LinearLayout.LayoutParams messageParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            messageParams.bottomMargin = (int) (24 * density);
+            messageContainer.setLayoutParams(messageParams);
+            bodyLayout.addView(messageContainer);
         }
 
         // Rows
-        if (rowsJson != null) {
+        if (!isMessageSheet && rowsJson != null) {
             try {
                 JSONArray rows = new JSONArray(rowsJson);
                 for (int i = 0; i < rows.length(); i++) {
                     JSONObject row = rows.getJSONObject(i);
                     LinearLayout rowLayout = createSheetRow(ctx, row, styleOptions, density, i < rows.length() - 1);
-                    contentLayout.addView(rowLayout);
+                    bodyLayout.addView(rowLayout);
                 }
             } catch (JSONException e) {
                 // Handle error
             }
         }
 
-        scrollView.addView(contentLayout);
+        scrollView.addView(bodyLayout);
         root.addView(scrollView);
 
-        // Count rows for minimum height calculation
-        int rowCount = 0;
-        if (rowsJson != null) {
-            try {
-                JSONArray countRows = new JSONArray(rowsJson);
-                rowCount = countRows.length();
-            } catch (JSONException e) {
-                // ignore
-            }
-        }
-
         // Button container pinned at bottom
-        LinearLayout buttonContainer = new LinearLayout(ctx);
+        buttonContainer = new LinearLayout(ctx);
         buttonContainer.setOrientation(LinearLayout.VERTICAL);
         float topSpacing = styleOptions.getContentButtonSpacing() != null ? styleOptions.getContentButtonSpacing() : 12f;
-
-        // For sheets with ≤4 rows and no explicit spacing, add extra spacing to reach ~50% screen height
-        if (rowCount <= 4 && styleOptions.getContentButtonSpacing() == null) {
-            int screenHeight = getResources().getDisplayMetrics().heightPixels;
-            float targetHeight = screenHeight * 0.5f;
-            // Estimate current content height: header + title + rows + buttons
-            float estimatedContent = (16 + 8 + 48 + 12 + 20) * density; // drag handle + logo area + title + margins
-            estimatedContent += rowCount * 56 * density; // ~56dp per row
-            estimatedContent += (48 + 12 + 48 + 4) * density; // buttons + padding
-            estimatedContent += topSpacing * density;
-            if (targetHeight > estimatedContent) {
-                topSpacing += (targetHeight - estimatedContent) / density;
-            }
-        }
 
         buttonContainer.setPadding(horizontalPadding, (int) (topSpacing * density), horizontalPadding, (int) (4 * density));
 
@@ -337,9 +393,63 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                 // Prevent dragging down in fullscreen mode
                 behavior.setDraggable(false);
             } else {
+                // Dynamic height based on content (min 50%, max 80%), drag down to close
+                ViewGroup.LayoutParams layoutParams = bottomSheet.getLayoutParams();
+                layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                bottomSheet.setLayoutParams(layoutParams);
+
                 behavior.setFitToContents(true);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 behavior.setSkipCollapsed(true);
+                behavior.setHideable(true);
+                behavior.setDraggable(true);
+
+                bottomSheet.post(() -> {
+                    int screenHeight = getResources().getDisplayMetrics().heightPixels;
+                    int width = bottomSheet.getWidth() > 0
+                        ? bottomSheet.getWidth()
+                        : getResources().getDisplayMetrics().widthPixels;
+
+                    int widthSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
+                    int heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+
+                    int headerHeight = 0;
+                    if (headerLayout != null) {
+                        headerLayout.measure(widthSpec, heightSpec);
+                        headerHeight = headerLayout.getMeasuredHeight();
+                    }
+
+                    int bodyHeight = 0;
+                    if (bodyLayout != null) {
+                        bodyLayout.measure(widthSpec, heightSpec);
+                        bodyHeight = bodyLayout.getMeasuredHeight();
+                    }
+
+                    int buttonHeight = 0;
+                    if (buttonContainer != null) {
+                        buttonContainer.measure(widthSpec, heightSpec);
+                        buttonHeight = buttonContainer.getMeasuredHeight();
+                    }
+
+                    int minHeight = (int) (screenHeight * 0.5f);
+                    int maxHeight = (int) (screenHeight * 0.8f);
+                    int desiredHeight = headerHeight + bodyHeight + buttonHeight;
+                    desiredHeight = Math.max(desiredHeight, minHeight);
+                    desiredHeight = Math.min(desiredHeight, maxHeight);
+
+                    if (scrollView != null) {
+                        ViewGroup.LayoutParams scrollParams = scrollView.getLayoutParams();
+                        int scrollHeight = Math.max(0, desiredHeight - headerHeight - buttonHeight);
+                        scrollParams.height = scrollHeight;
+                        scrollView.setLayoutParams(scrollParams);
+                    }
+
+                    ViewGroup.LayoutParams sheetParams = bottomSheet.getLayoutParams();
+                    sheetParams.height = desiredHeight;
+                    bottomSheet.setLayoutParams(sheetParams);
+
+                    behavior.setPeekHeight(desiredHeight);
+                    behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                });
             }
         });
     }

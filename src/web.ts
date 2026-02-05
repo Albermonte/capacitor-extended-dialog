@@ -13,6 +13,8 @@ import type {
   MultiSelectResult,
   SheetOptions,
   SheetResult,
+  MessageSheetOptions,
+  MessageSheetResult,
   DialogStyleOptions,
 } from './definitions';
 
@@ -375,6 +377,79 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
     });
   }
 
+  async messageSheet(options: MessageSheetOptions): Promise<MessageSheetResult> {
+    return new Promise((resolve) => {
+      const overlay = this.createOverlay();
+      const dialog = this.createMessageSheetDialogContainer(options);
+
+      const content = document.createElement('div');
+      content.style.cssText = 'display: flex; flex-direction: column; flex: 1 1 auto; overflow-y: auto;';
+
+      if (options.headerLogo) {
+        const headerLogo = document.createElement('img');
+        headerLogo.src = options.headerLogo;
+        const logoSize = options.mode === 'fullscreen' ? 64 : 48;
+        headerLogo.style.cssText = `width: ${logoSize}px; height: ${logoSize}px; object-fit: contain; margin: 0 auto 16px auto; border-radius: 8px;`;
+        headerLogo.onerror = () => {
+          headerLogo.style.display = 'none';
+        };
+        content.appendChild(headerLogo);
+      }
+
+      const titleEl = document.createElement('h2');
+      titleEl.textContent = options.title;
+      const titleFontSize = options.titleFontSize ?? 20;
+      const titleColor = options.titleColor ?? 'inherit';
+      titleEl.style.cssText = `margin: 0 0 16px 0; font-size: ${titleFontSize}px; font-weight: 600; color: ${titleColor}; text-align: center;`;
+      content.appendChild(titleEl);
+
+      const messageEl = document.createElement('p');
+      messageEl.textContent = options.message;
+      const messageFontSize = options.messageFontSize ?? 16;
+      const messageColor = options.messageColor ?? '#666';
+      messageEl.style.cssText = `margin: 0; font-size: ${messageFontSize}px; color: ${messageColor}; white-space: pre-wrap; word-break: break-word;`;
+
+      const messageContainer = document.createElement('div');
+      messageContainer.style.cssText =
+        'background: #E5E5EA; border-radius: 12px; padding: 16px; margin: 0;';
+      messageContainer.appendChild(messageEl);
+      content.appendChild(messageContainer);
+
+      dialog.appendChild(content);
+
+      const spacing = options.contentButtonSpacing ?? 24;
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.cssText = `display: flex; flex-direction: column; gap: 12px; margin-top: ${spacing}px;`;
+
+      const confirmButton = this.createButton(
+        options.confirmButtonTitle ?? 'Confirm',
+        true,
+        () => {
+          this.removeOverlay(overlay);
+          resolve({ confirmed: true });
+        },
+        options,
+      );
+
+      const cancelButton = this.createButton(
+        options.cancelButtonTitle ?? 'Cancel',
+        false,
+        () => {
+          this.removeOverlay(overlay);
+          resolve({ confirmed: false });
+        },
+        options,
+      );
+
+      buttonContainer.appendChild(confirmButton);
+      buttonContainer.appendChild(cancelButton);
+      dialog.appendChild(buttonContainer);
+
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+    });
+  }
+
   private createSheetDialogContainer(options: SheetOptions): HTMLDivElement {
     const dialog = document.createElement('div');
     const bgColor = options.backgroundColor ?? 'white';
@@ -387,6 +462,24 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       max-height: 80vh;
       overflow-y: auto;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    `;
+    return dialog;
+  }
+
+  private createMessageSheetDialogContainer(options: MessageSheetOptions): HTMLDivElement {
+    const dialog = document.createElement('div');
+    const bgColor = options.backgroundColor ?? 'white';
+    const isFullscreen = options.mode === 'fullscreen';
+    dialog.style.cssText = `
+      background: ${bgColor};
+      border-radius: ${isFullscreen ? '0' : '16px'};
+      padding: 24px;
+      width: ${isFullscreen ? '100%' : 'min(90vw, 420px)'};
+      height: ${isFullscreen ? '100%' : 'auto'};
+      max-height: ${isFullscreen ? '100vh' : '80vh'};
+      display: flex;
+      flex-direction: column;
+      box-shadow: ${isFullscreen ? 'none' : '0 4px 24px rgba(0, 0, 0, 0.2)'};
     `;
     return dialog;
   }

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:android": "ionic cap run android --livereload --external --watch",
+    "dev:android": "ionic cap run android --external",
     "dev:a": "pnpm run dev:android",
-    "dev:ios": "ionic cap run ios --livereload --external --watch",
+    "dev:ios": "ionic cap run ios --external",
     "dev:i": "pnpm run dev:ios",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",

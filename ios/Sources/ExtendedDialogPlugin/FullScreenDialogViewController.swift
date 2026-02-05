@@ -7,6 +7,7 @@ public enum DialogType {
     case singleSelect
     case multiSelect
     case sheet
+    case messageSheet
 }
 
 public class FullScreenDialogViewController: UIViewController {
@@ -240,8 +241,9 @@ public class FullScreenDialogViewController: UIViewController {
         let safeTop = view.safeAreaInsets.top
         let safeBottom = view.safeAreaInsets.bottom
 
-        let headerTop: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 20 : 12
-        let headerHeight: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 12 : 64
+        let isSheetLike = dialogType == .sheet || dialogType == .messageSheet
+        let headerTop: CGFloat = (isSheetLike && modalPresentationStyle == .pageSheet) ? 20 : 12
+        let headerHeight: CGFloat = (isSheetLike && modalPresentationStyle == .pageSheet) ? 12 : 64
         let spacingAfterHeader: CGFloat = 8
 
         // Measure scroll content height for sheets, or content height for other types
@@ -254,7 +256,7 @@ public class FullScreenDialogViewController: UIViewController {
         }
 
         var spacingToButtons: CGFloat = styleOptions?.contentButtonSpacing ?? 16
-        let buttonStackHeight: CGFloat = (dialogType == .sheet && cancelButtonTitle != nil) ? 112 : 50
+        let buttonStackHeight: CGFloat = (isSheetLike && cancelButtonTitle != nil) ? 112 : 50
         let bottomPadding: CGFloat = 4
         let grabberAllowance: CGFloat = 20
 
@@ -340,6 +342,7 @@ public class FullScreenDialogViewController: UIViewController {
     // MARK: - Setup
 
     private func setupUI() {
+        let isSheetLike = dialogType == .sheet || dialogType == .messageSheet
         // Apply background: custom color, or blur for sheets, or solid for fullscreen
         if let bgColor = styleOptions?.backgroundColor {
             view.backgroundColor = bgColor
@@ -363,8 +366,8 @@ public class FullScreenDialogViewController: UIViewController {
         headerView.addSubview(closeButtonView)
         headerView.addSubview(titleLabel)
 
-        let headerTop: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 20 : 12
-        let headerHeight: CGFloat = (dialogType == .sheet && modalPresentationStyle == .pageSheet) ? 12 : 64
+        let headerTop: CGFloat = (isSheetLike && modalPresentationStyle == .pageSheet) ? 20 : 12
+        let headerHeight: CGFloat = (isSheetLike && modalPresentationStyle == .pageSheet) ? 12 : 64
 
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: headerTop),
@@ -394,7 +397,7 @@ public class FullScreenDialogViewController: UIViewController {
 
         // Message (hidden for sheet dialogs - title is shown in content area)
         contentView.addSubview(messageLabel)
-        if dialogType == .sheet {
+        if isSheetLike {
             messageLabel.isHidden = true
             titleLabel.isHidden = true // Also hide header title for sheets
             // Hide close button in basic sheet mode (.pageSheet presentation)
@@ -448,6 +451,10 @@ public class FullScreenDialogViewController: UIViewController {
             // For sheet, use contentView.topAnchor since messageLabel is hidden
             lastView = createSheetContent(in: contentView, below: contentView)
 
+        case .messageSheet:
+            // For message sheet, use contentView.topAnchor since messageLabel is hidden
+            lastView = createMessageSheetContent(in: contentView, below: contentView)
+
         default:
             break
         }
@@ -456,7 +463,7 @@ public class FullScreenDialogViewController: UIViewController {
         view.addSubview(buttonStack)
 
         // For sheet dialogs: vertical layout with primary button first, cancel below
-        if dialogType == .sheet {
+        if isSheetLike {
             buttonStack.axis = .vertical
             buttonStack.distribution = .fill
             buttonStack.addArrangedSubview(okButton)
@@ -475,7 +482,7 @@ public class FullScreenDialogViewController: UIViewController {
         buttonStackBottomConstraint = buttonStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -4)
 
         // Calculate button stack height: 50 for single button or horizontal layout, 112 for vertical (two 50pt buttons + 12pt spacing)
-        let buttonStackHeight: CGFloat = (dialogType == .sheet && cancelButtonTitle != nil) ? 112 : 50
+        let buttonStackHeight: CGFloat = (isSheetLike && cancelButtonTitle != nil) ? 112 : 50
 
         NSLayoutConstraint.activate([
             buttonStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
@@ -485,7 +492,7 @@ public class FullScreenDialogViewController: UIViewController {
         ])
 
         // For sheet dialogs, wrap contentView in a scroll view so rows are scrollable
-        if dialogType == .sheet {
+        if isSheetLike {
             // Remove contentView from its current superview and re-add inside a scroll view
             contentView.removeFromSuperview()
 
@@ -640,6 +647,104 @@ public class FullScreenDialogViewController: UIViewController {
         }
 
         sheetContainer.addArrangedSubview(rowsBackground)
+
+        // If topView is the container itself, use topAnchor directly
+        if topView === container {
+            NSLayoutConstraint.activate([
+                sheetContainer.topAnchor.constraint(equalTo: container.topAnchor),
+                sheetContainer.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                sheetContainer.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                sheetContainer.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: 16),
+                sheetContainer.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                sheetContainer.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+            ])
+        }
+
+        return sheetContainer
+    }
+
+    private func createMessageSheetContent(in container: UIView, below topView: UIView) -> UIView {
+        let sheetContainer = UIStackView()
+        sheetContainer.translatesAutoresizingMaskIntoConstraints = false
+        sheetContainer.axis = .vertical
+        sheetContainer.spacing = 0
+        sheetContainer.alignment = .fill
+        container.addSubview(sheetContainer)
+
+        // Header logo (centered, 48pt for basic, 64pt for fullscreen)
+        if let logoUrl = headerLogo, !logoUrl.isEmpty {
+            let logoSize: CGFloat = modalPresentationStyle == .fullScreen ? 64 : 48
+            let logoView = UIImageView()
+            logoView.translatesAutoresizingMaskIntoConstraints = false
+            logoView.contentMode = .scaleAspectFit
+            logoView.layer.cornerRadius = 8
+            logoView.layer.cornerCurve = .continuous
+            logoView.clipsToBounds = true
+
+            let logoWrapper = UIView()
+            logoWrapper.translatesAutoresizingMaskIntoConstraints = false
+            logoWrapper.addSubview(logoView)
+
+            NSLayoutConstraint.activate([
+                logoView.centerXAnchor.constraint(equalTo: logoWrapper.centerXAnchor),
+                logoView.topAnchor.constraint(equalTo: logoWrapper.topAnchor),
+                logoView.bottomAnchor.constraint(equalTo: logoWrapper.bottomAnchor),
+                logoView.widthAnchor.constraint(equalToConstant: logoSize),
+                logoView.heightAnchor.constraint(equalToConstant: logoSize)
+            ])
+
+            sheetContainer.addArrangedSubview(logoWrapper)
+            sheetContainer.setCustomSpacing(16, after: logoWrapper)
+            loadImage(from: logoUrl, into: logoView)
+        }
+
+        // Title (centered)
+        let sheetTitleLabel = UILabel()
+        sheetTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        sheetTitleLabel.text = dialogTitle
+        let titleFontSize = styleOptions?.titleFontSize ?? 20
+        sheetTitleLabel.font = .systemFont(ofSize: titleFontSize, weight: .semibold)
+        sheetTitleLabel.textAlignment = .center
+        if let titleColor = styleOptions?.titleColor {
+            sheetTitleLabel.textColor = titleColor
+        }
+        sheetContainer.addArrangedSubview(sheetTitleLabel)
+        sheetContainer.setCustomSpacing(16, after: sheetTitleLabel)
+
+        // Message container with background
+        let messageBackground = UIView()
+        messageBackground.translatesAutoresizingMaskIntoConstraints = false
+        messageBackground.backgroundColor = .secondarySystemGroupedBackground
+        var messageCornerRadius: CGFloat = 12
+        if #available(iOS 26, *) {
+            messageCornerRadius = 16
+        }
+        messageBackground.layer.cornerRadius = messageCornerRadius
+        messageBackground.layer.cornerCurve = .continuous
+        messageBackground.clipsToBounds = true
+
+        let messageLabel = UILabel()
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.text = message
+        let messageFontSize = styleOptions?.messageFontSize ?? 16
+        messageLabel.font = .systemFont(ofSize: messageFontSize)
+        messageLabel.textColor = styleOptions?.messageColor ?? .secondaryLabel
+        messageLabel.numberOfLines = 0
+        messageLabel.lineBreakMode = .byWordWrapping
+        messageLabel.textAlignment = .left
+
+        messageBackground.addSubview(messageLabel)
+        NSLayoutConstraint.activate([
+            messageLabel.topAnchor.constraint(equalTo: messageBackground.topAnchor, constant: 16),
+            messageLabel.leadingAnchor.constraint(equalTo: messageBackground.leadingAnchor, constant: 16),
+            messageLabel.trailingAnchor.constraint(equalTo: messageBackground.trailingAnchor, constant: -16),
+            messageLabel.bottomAnchor.constraint(equalTo: messageBackground.bottomAnchor, constant: -16)
+        ])
+
+        sheetContainer.addArrangedSubview(messageBackground)
 
         // If topView is the container itself, use topAnchor directly
         if topView === container {
@@ -819,6 +924,8 @@ public class FullScreenDialogViewController: UIViewController {
             multiSelectCallback?(Array(selectedValues), false)
         case .sheet:
             sheetCallback?(true)
+        case .messageSheet:
+            sheetCallback?(true)
         }
     }
 
@@ -838,6 +945,8 @@ public class FullScreenDialogViewController: UIViewController {
         case .multiSelect:
             multiSelectCallback?([], true)
         case .sheet:
+            sheetCallback?(false)
+        case .messageSheet:
             sheetCallback?(false)
         }
     }

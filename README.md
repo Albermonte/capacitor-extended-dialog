@@ -19,6 +19,7 @@ npx cap sync
 * [`singleSelect(...)`](#singleselect)
 * [`multiSelect(...)`](#multiselect)
 * [`sheet(...)`](#sheet)
+* [`messageSheet(...)`](#messagesheet)
 * [Interfaces](#interfaces)
 * [Type Aliases](#type-aliases)
 
@@ -123,6 +124,23 @@ Show a sheet dialog with a header, title, and structured data rows.
 | Param         | Type                                                  | Description                    |
 | ------------- | ----------------------------------------------------- | ------------------------------ |
 | **`options`** | <code><a href="#sheetoptions">SheetOptions</a></code> | - Sheet configuration options. |
+
+**Returns:** <code>any</code>
+
+--------------------
+
+
+### messageSheet(...)
+
+```typescript
+messageSheet(options: MessageSheetOptions) => any
+```
+
+Show a message sheet dialog with an optional header logo, title, and message.
+
+| Param         | Type                                                                | Description                            |
+| ------------- | ------------------------------------------------------------------- | -------------------------------------- |
+| **`options`** | <code><a href="#messagesheetoptions">MessageSheetOptions</a></code> | - Message sheet configuration options. |
 
 **Returns:** <code>any</code>
 
@@ -239,6 +257,25 @@ Show a sheet dialog with a header, title, and structured data rows.
 
 
 #### SheetResult
+
+| Prop            | Type                 | Description                           |
+| --------------- | -------------------- | ------------------------------------- |
+| **`confirmed`** | <code>boolean</code> | True if confirmed, false if cancelled |
+
+
+#### MessageSheetOptions
+
+| Prop                     | Type                                              | Description                                              |
+| ------------------------ | ------------------------------------------------- | -------------------------------------------------------- |
+| **`headerLogo`**         | <code>string</code>                               | Header logo - supports base64 data URL or HTTP/HTTPS URL |
+| **`title`**              | <code>string</code>                               | Sheet title                                              |
+| **`message`**            | <code>string</code>                               | Message body displayed in the sheet                      |
+| **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
+| **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |
+| **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                              |
+
+
+#### MessageSheetResult
 
 | Prop            | Type                 | Description                           |
 | --------------- | -------------------- | ------------------------------------- |

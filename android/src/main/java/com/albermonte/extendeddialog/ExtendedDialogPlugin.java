@@ -250,4 +250,42 @@ public class ExtendedDialogPlugin extends Plugin {
             call.reject("Invalid rows format");
         }
     }
+
+    @PluginMethod
+    public void messageSheet(PluginCall call) {
+        String title = call.getString("title");
+        String message = call.getString("message");
+        String headerLogo = call.getString("headerLogo");
+        String confirmButtonTitle = call.getString("confirmButtonTitle");
+        String cancelButtonTitle = call.getString("cancelButtonTitle");
+        String mode = call.getString("mode", "basic");
+        boolean fullscreen = "fullscreen".equals(mode);
+        DialogStyleOptions styleOptions = extractStyleOptions(call);
+
+        if (title == null) {
+            call.reject("title is required");
+            return;
+        }
+
+        if (message == null) {
+            call.reject("message is required");
+            return;
+        }
+
+        implementation.showMessageSheet(
+            getActivity(),
+            title,
+            message,
+            headerLogo,
+            confirmButtonTitle,
+            cancelButtonTitle,
+            fullscreen,
+            styleOptions,
+            (confirmed) -> {
+                JSObject result = new JSObject();
+                result.put("confirmed", confirmed);
+                call.resolve(result);
+            }
+        );
+    }
 }

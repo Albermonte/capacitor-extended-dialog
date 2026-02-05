@@ -771,4 +771,35 @@ public class ExtendedDialog {
             fragment.show(fragmentActivity.getSupportFragmentManager(), "bottom_sheet");
         });
     }
+
+    public void showMessageSheet(
+        Activity activity,
+        String title,
+        String message,
+        String headerLogo,
+        String confirmButtonTitle,
+        String cancelButtonTitle,
+        boolean fullscreen,
+        DialogStyleOptions styleOptions,
+        SheetCallback callback
+    ) {
+        if (!(activity instanceof FragmentActivity)) {
+            callback.onResult(false);
+            return;
+        }
+        FragmentActivity fragmentActivity = (FragmentActivity) activity;
+        fragmentActivity.runOnUiThread(() -> {
+            SheetBottomDialogFragment fragment = SheetBottomDialogFragment.newMessageInstance(
+                title,
+                headerLogo,
+                message,
+                confirmButtonTitle != null ? confirmButtonTitle : "Confirm",
+                cancelButtonTitle != null ? cancelButtonTitle : "Cancel",
+                fullscreen,
+                styleOptions
+            );
+            fragment.setSheetCallback(callback);
+            fragment.show(fragmentActivity.getSupportFragmentManager(), "message_sheet");
+        });
+    }
 }

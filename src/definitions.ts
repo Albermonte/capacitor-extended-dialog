@@ -258,7 +258,27 @@ export interface SheetOptions extends DialogStyleOptions {
   mode?: DialogMode;
 }
 
+export interface MessageSheetOptions extends DialogStyleOptions {
+  /** Header logo - supports base64 data URL or HTTP/HTTPS URL */
+  headerLogo?: string;
+  /** Sheet title */
+  title: string;
+  /** Message body displayed in the sheet */
+  message: string;
+  /** Confirm button title */
+  confirmButtonTitle?: string; // default: "Confirm"
+  /** Cancel button title */
+  cancelButtonTitle?: string; // default: "Cancel"
+  /** Dialog mode */
+  mode?: DialogMode;
+}
+
 export interface SheetResult {
+  /** True if confirmed, false if cancelled */
+  confirmed: boolean;
+}
+
+export interface MessageSheetResult {
   /** True if confirmed, false if cancelled */
   confirmed: boolean;
 }
@@ -305,4 +325,12 @@ export interface ExtendedDialogPlugin {
    * @returns Whether the user confirmed or cancelled the sheet.
    */
   sheet(options: SheetOptions): Promise<SheetResult>;
+
+  /**
+   * Show a message sheet dialog with an optional header logo, title, and message.
+   *
+   * @param options - Message sheet configuration options.
+   * @returns Whether the user confirmed or cancelled the sheet.
+   */
+  messageSheet(options: MessageSheetOptions): Promise<MessageSheetResult>;
 }

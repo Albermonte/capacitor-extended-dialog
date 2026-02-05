@@ -441,6 +441,41 @@ public struct DialogStyleOptions {
         }
     }
 
+    public func showMessageSheet(
+        title: String,
+        message: String,
+        headerLogo: String?,
+        confirmButtonTitle: String?,
+        cancelButtonTitle: String?,
+        fullscreen: Bool,
+        styleOptions: DialogStyleOptions? = nil,
+        callback: @escaping SheetCallback
+    ) {
+        DispatchQueue.main.async {
+            let vc = FullScreenDialogViewController(
+                dialogType: .messageSheet,
+                dialogTitle: title,
+                message: message,
+                okButtonTitle: confirmButtonTitle ?? "Confirm",
+                cancelButtonTitle: cancelButtonTitle ?? "Cancel",
+                inputPlaceholder: nil,
+                inputText: nil,
+                options: nil,
+                selectedValue: nil,
+                selectedValues: nil,
+                styleOptions: styleOptions
+            )
+            vc.sheetCallback = callback
+            vc.headerLogo = headerLogo
+
+            if fullscreen {
+                self.presentFullScreen(vc)
+            } else {
+                self.presentBasicSheet(vc)
+            }
+        }
+    }
+
     private func showBasicSheet(title: String, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
         // Use FullScreenDialogViewController in sheet presentation mode for basic sheet
         let vc = FullScreenDialogViewController(

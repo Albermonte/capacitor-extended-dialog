@@ -11,7 +11,8 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "prompt", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "singleSelect", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "multiSelect", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "sheet", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "sheet", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "messageSheet", returnType: CAPPluginReturnPromise)
     ]
 
     private let implementation = ExtendedDialog()
@@ -197,6 +198,35 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             title: title,
             headerLogo: headerLogo,
             rows: rowsArray,
+            confirmButtonTitle: confirmButtonTitle,
+            cancelButtonTitle: cancelButtonTitle,
+            fullscreen: fullscreen,
+            styleOptions: styleOptions
+        ) { confirmed in
+            call.resolve(["confirmed": confirmed])
+        }
+    }
+
+    @objc func messageSheet(_ call: CAPPluginCall) {
+        guard let title = call.getString("title") else {
+            call.reject("title is required")
+            return
+        }
+        guard let message = call.getString("message") else {
+            call.reject("message is required")
+            return
+        }
+        let headerLogo = call.getString("headerLogo")
+        let confirmButtonTitle = call.getString("confirmButtonTitle")
+        let cancelButtonTitle = call.getString("cancelButtonTitle")
+        let mode = call.getString("mode") ?? "basic"
+        let fullscreen = mode == "fullscreen"
+        let styleOptions = extractStyleOptions(call)
+
+        implementation.showMessageSheet(
+            title: title,
+            message: message,
+            headerLogo: headerLogo,
             confirmButtonTitle: confirmButtonTitle,
             cancelButtonTitle: cancelButtonTitle,
             fullscreen: fullscreen,

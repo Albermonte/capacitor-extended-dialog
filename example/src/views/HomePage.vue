@@ -189,6 +189,18 @@
             <p>Sheet in fullscreen mode</p>
           </ion-label>
         </ion-item>
+        <ion-item button @click="showMessageSheet('basic')">
+          <ion-label>
+            <h2>Message Sheet (Basic)</h2>
+            <p>Title + long message with fixed buttons</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showMessageSheet('fullscreen')">
+          <ion-label>
+            <h2>Message Sheet (Fullscreen)</h2>
+            <p>Sign message-style confirmation</p>
+          </ion-label>
+        </ion-item>
         <ion-item button @click="showSheetWithLogo()">
           <ion-label>
             <h2>Sheet with Header Logo</h2>
@@ -663,6 +675,30 @@ async function showSheet(mode: DialogMode) {
   });
   lastResult.value = {
     type: 'sheet',
+    mode,
+    confirmed: result.confirmed
+  };
+}
+
+async function showMessageSheet(mode: DialogMode) {
+  const message = `You are about to sign the following message:\n\n` +
+    `I authorize the transfer of funds from my wallet to the recipient. ` +
+    `This signature confirms that I understand the transaction details and accept the terms.\n\n` +
+    `Network: Testnet\n` +
+    `Nonce: 74291\n` +
+    `Expires: 10 minutes`;
+
+  const result = await ExtendedDialog.messageSheet({
+    title: 'Sign Message',
+    message,
+    headerLogo: 'https://picsum.photos/seed/sign/80',
+    confirmButtonTitle: 'Sign',
+    cancelButtonTitle: 'Reject',
+    mode,
+  });
+
+  lastResult.value = {
+    type: 'messageSheet',
     mode,
     confirmed: result.confirmed
   };
