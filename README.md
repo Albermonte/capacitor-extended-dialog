@@ -9,6 +9,13 @@ npm install capacitor-extended-dialog
 npx cap sync
 ```
 
+## Android sheet behavior
+
+- In `mode: 'basic'`, native Android sheets open between 50% and 80% of screen height.
+- Dragging up continuously increases available body space while keeping header content at the top and actions pinned to the bottom.
+- If sheet content exceeds the 80% initial cap, the body area becomes internally scrollable.
+- In `mode: 'fullscreen'`, the same top-content/bottom-actions layout is preserved with a scrollable body area for overflow.
+
 ## API
 
 <docgen-index>

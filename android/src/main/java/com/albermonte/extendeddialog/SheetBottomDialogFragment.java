@@ -21,6 +21,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.TextViewCompat;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -51,10 +54,17 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
     private ExtendedDialog.SheetCallback sheetCallback;
     private boolean dismissed = false;
     private Context themedContext;
+    private LinearLayout rootLayout;
     private ScrollView scrollView;
     private LinearLayout headerLayout;
     private LinearLayout bodyLayout;
     private LinearLayout buttonContainer;
+    private int buttonHorizontalPaddingPx;
+    private int buttonTopPaddingPx;
+    private int buttonBottomBasePaddingPx;
+    private int buttonBottomInsetsPx;
+    private int buttonExpandedExtraPaddingPx;
+    private boolean applyExpandedButtonOffset;
 
     public static SheetBottomDialogFragment newInstance(
         String title,
@@ -145,10 +155,13 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
 
         Context ctx = getThemedContext();
         float density = getResources().getDisplayMetrics().density;
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+        int initialRootHeight = fullscreen ? screenHeight : (int) (screenHeight * 0.5f);
 
         // Root layout
-        LinearLayout root = new LinearLayout(ctx);
-        root.setOrientation(LinearLayout.VERTICAL);
+        rootLayout = new LinearLayout(ctx);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        rootLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, initialRootHeight));
 
         // Apply background color
         if (styleOptions.getBackgroundColor() != null) {
@@ -161,7 +174,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                 .build();
             MaterialShapeDrawable shapeDrawable = new MaterialShapeDrawable(shapeModel);
             shapeDrawable.setFillColor(ColorStateList.valueOf(styleOptions.getBackgroundColor()));
-            root.setBackground(shapeDrawable);
+            rootLayout.setBackground(shapeDrawable);
         }
 
         // Drag handle (only shown in basic/non-fullscreen mode)
@@ -180,7 +193,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             handleDrawable.setCornerRadius(handleHeight / 2f);
             handleDrawable.setColor(outlineVariantColor);
             dragHandle.setBackground(handleDrawable);
-            root.addView(dragHandle);
+            rootLayout.addView(dragHandle);
         }
 
         int horizontalPadding = (int) (24 * density);
@@ -247,12 +260,13 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             titleView.setLayoutParams(titleParams);
             headerLayout.addView(titleView);
         }
-        root.addView(headerLayout);
+        rootLayout.addView(headerLayout);
 
         // ScrollView for body content (rows/message only)
         scrollView = new ScrollView(ctx);
         scrollView.setFillViewport(true);
-        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         bodyLayout = new LinearLayout(ctx);
         bodyLayout.setOrientation(LinearLayout.VERTICAL);
@@ -312,14 +326,35 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         }
 
         scrollView.addView(bodyLayout);
-        root.addView(scrollView);
+        rootLayout.addView(scrollView);
 
         // Button container pinned at bottom
         buttonContainer = new LinearLayout(ctx);
         buttonContainer.setOrientation(LinearLayout.VERTICAL);
         float topSpacing = styleOptions.getContentButtonSpacing() != null ? styleOptions.getContentButtonSpacing() : 12f;
+        int buttonTopPadding = (int) (topSpacing * density);
+        int baseBottomPadding = (int) ((fullscreen ? 4f : 12f) * density);
+        int nonFullscreenExtraBottomPadding = fullscreen ? 0 : (int) (4 * density);
+        int bottomPaddingWithoutInsets = baseBottomPadding + nonFullscreenExtraBottomPadding;
 
-        buttonContainer.setPadding(horizontalPadding, (int) (topSpacing * density), horizontalPadding, (int) (4 * density));
+        buttonHorizontalPaddingPx = horizontalPadding;
+        buttonTopPaddingPx = buttonTopPadding;
+        buttonBottomBasePaddingPx = bottomPaddingWithoutInsets;
+        buttonBottomInsetsPx = 0;
+        buttonExpandedExtraPaddingPx = (int) (48 * density);
+        applyExpandedButtonOffset = fullscreen;
+
+        applyButtonContainerPadding();
+
+        ViewCompat.setOnApplyWindowInsetsListener(buttonContainer, (viewWithInsets, windowInsets) -> {
+            Insets systemBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets gestureInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures());
+            Insets tappableInsets = windowInsets.getInsets(WindowInsetsCompat.Type.tappableElement());
+            buttonBottomInsetsPx = Math.max(systemBarInsets.bottom, Math.max(gestureInsets.bottom, tappableInsets.bottom));
+            applyButtonContainerPadding();
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(buttonContainer);
 
         int primaryColor = MaterialColors.getColor(ctx, android.R.attr.colorPrimary, 0xFF6750A4);
 
@@ -380,9 +415,9 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         cancelBtn.setLayoutParams(cancelParams);
         buttonContainer.addView(cancelBtn);
 
-        root.addView(buttonContainer);
+        rootLayout.addView(buttonContainer);
 
-        return root;
+        return rootLayout;
     }
 
     @Override
@@ -413,16 +448,52 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 // Prevent dragging down in fullscreen mode
                 behavior.setDraggable(false);
+                setExpandedButtonOffset(true);
+                behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                    @Override
+                    public void onStateChanged(@NonNull View sheet, int newState) {
+                        if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                            setExpandedButtonOffset(true);
+                            setRootHeight(getVisibleSheetHeight(sheet));
+                        }
+                    }
+
+                    @Override
+                    public void onSlide(@NonNull View sheet, float slideOffset) {
+                        setExpandedButtonOffset(true);
+                        setRootHeight(getVisibleSheetHeight(sheet));
+                    }
+                });
+                bottomSheet.post(() -> setRootHeight(getVisibleSheetHeight(bottomSheet)));
             } else {
-                // Dynamic height based on content (min 50%, max 80%), drag down to close
+                // Multi-stop bottom sheet: drag up to fullscreen, drag down to dismiss
                 ViewGroup.LayoutParams layoutParams = bottomSheet.getLayoutParams();
                 layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 bottomSheet.setLayoutParams(layoutParams);
 
-                behavior.setFitToContents(true);
+                behavior.setFitToContents(false);
                 behavior.setSkipCollapsed(true);
                 behavior.setHideable(true);
                 behavior.setDraggable(true);
+
+                behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                    @Override
+                    public void onStateChanged(@NonNull View sheet, int newState) {
+                        if (
+                            newState == BottomSheetBehavior.STATE_HALF_EXPANDED ||
+                            newState == BottomSheetBehavior.STATE_EXPANDED
+                        ) {
+                            setExpandedButtonOffset(newState == BottomSheetBehavior.STATE_EXPANDED);
+                            setRootHeight(getVisibleSheetHeight(sheet));
+                        }
+                    }
+
+                    @Override
+                    public void onSlide(@NonNull View sheet, float slideOffset) {
+                        setExpandedButtonOffset(slideOffset >= 0.9f);
+                        setRootHeight(getVisibleSheetHeight(sheet));
+                    }
+                });
 
                 bottomSheet.post(() -> {
                     int screenHeight = getResources().getDisplayMetrics().heightPixels;
@@ -445,34 +516,88 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                         bodyHeight = bodyLayout.getMeasuredHeight();
                     }
 
-                    int buttonHeight = 0;
+                    int btnHeight = 0;
                     if (buttonContainer != null) {
                         buttonContainer.measure(widthSpec, heightSpec);
-                        buttonHeight = buttonContainer.getMeasuredHeight();
+                        btnHeight = buttonContainer.getMeasuredHeight();
                     }
 
-                    int minHeight = (int) (screenHeight * 0.5f);
-                    int maxHeight = (int) (screenHeight * 0.8f);
-                    int desiredHeight = headerHeight + bodyHeight + buttonHeight;
-                    desiredHeight = Math.max(desiredHeight, minHeight);
-                    desiredHeight = Math.min(desiredHeight, maxHeight);
+                    // Add drag handle height (~28dp)
+                    float density = getResources().getDisplayMetrics().density;
+                    int dragHandleHeight = (int) (28 * density);
 
-                    if (scrollView != null) {
-                        ViewGroup.LayoutParams scrollParams = scrollView.getLayoutParams();
-                        int scrollHeight = Math.max(0, desiredHeight - headerHeight - buttonHeight);
-                        scrollParams.height = scrollHeight;
-                        scrollView.setLayoutParams(scrollParams);
-                    }
+                    int contentRequiredHeight = headerHeight + bodyHeight + btnHeight + dragHandleHeight;
+                    int desiredHeight = clampInitialSheetHeight(screenHeight, contentRequiredHeight);
+                    float ratio = calculateHalfExpandedRatio(screenHeight, desiredHeight);
 
-                    ViewGroup.LayoutParams sheetParams = bottomSheet.getLayoutParams();
-                    sheetParams.height = desiredHeight;
-                    bottomSheet.setLayoutParams(sheetParams);
-
+                    setRootHeight(desiredHeight);
+                    behavior.setHalfExpandedRatio(ratio);
                     behavior.setPeekHeight(desiredHeight);
-                    behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    behavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+                    bottomSheet.post(() -> setRootHeight(getVisibleSheetHeight(bottomSheet)));
                 });
             }
         });
+    }
+
+    static int clampInitialSheetHeight(int screenHeight, int contentRequiredHeight) {
+        int minHeight = (int) (screenHeight * 0.5f);
+        int maxHeight = (int) (screenHeight * 0.8f);
+        int clampedToMin = Math.max(contentRequiredHeight, minHeight);
+        return Math.min(clampedToMin, maxHeight);
+    }
+
+    static float calculateHalfExpandedRatio(int screenHeight, int desiredHeight) {
+        if (screenHeight <= 0) {
+            return 0.5f;
+        }
+        float ratio = (float) desiredHeight / screenHeight;
+        return Math.max(0.5f, Math.min(ratio, 0.8f));
+    }
+
+    private int getVisibleSheetHeight(@NonNull View sheet) {
+        View parent = sheet.getParent() instanceof View ? (View) sheet.getParent() : null;
+        int parentHeight = parent != null ? parent.getHeight() : getResources().getDisplayMetrics().heightPixels;
+        int visibleHeight = parentHeight - sheet.getTop();
+        int nonNegativeHeight = Math.max(0, visibleHeight);
+        // Clamp to parent bounds to avoid overshoot during spring/drag transitions.
+        return Math.min(parentHeight, nonNegativeHeight);
+    }
+
+    private void setRootHeight(int targetHeight) {
+        if (rootLayout == null || targetHeight <= 0) {
+            return;
+        }
+        ViewGroup.LayoutParams params = rootLayout.getLayoutParams();
+        if (params == null) {
+            params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, targetHeight);
+        } else if (params.height == targetHeight) {
+            return;
+        }
+        params.height = targetHeight;
+        rootLayout.setLayoutParams(params);
+    }
+
+    private void setExpandedButtonOffset(boolean enabled) {
+        if (applyExpandedButtonOffset == enabled) {
+            return;
+        }
+        applyExpandedButtonOffset = enabled;
+        applyButtonContainerPadding();
+    }
+
+    private void applyButtonContainerPadding() {
+        if (buttonContainer == null) {
+            return;
+        }
+        int expandedExtraBottomPadding = applyExpandedButtonOffset ? buttonExpandedExtraPaddingPx : 0;
+        int resolvedBottomPadding = buttonBottomBasePaddingPx + buttonBottomInsetsPx + expandedExtraBottomPadding;
+        buttonContainer.setPadding(
+            buttonHorizontalPaddingPx,
+            buttonTopPaddingPx,
+            buttonHorizontalPaddingPx,
+            resolvedBottomPadding
+        );
     }
 
     private LinearLayout createSheetRow(
