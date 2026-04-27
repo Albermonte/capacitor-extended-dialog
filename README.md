@@ -38,7 +38,7 @@ npx cap sync
 ### alert(...)
 
 ```typescript
-alert(options: AlertOptions) => any
+alert(options: AlertOptions) => Promise<void>
 ```
 
 Show an alert dialog with a single dismiss button.
@@ -47,15 +47,13 @@ Show an alert dialog with a single dismiss button.
 | ------------- | ----------------------------------------------------- | ------------------------------ |
 | **`options`** | <code><a href="#alertoptions">AlertOptions</a></code> | - Alert configuration options. |
 
-**Returns:** <code>any</code>
-
 --------------------
 
 
 ### confirm(...)
 
 ```typescript
-confirm(options: ConfirmOptions) => any
+confirm(options: ConfirmOptions) => Promise<ConfirmResult>
 ```
 
 Show a confirmation dialog with OK and Cancel buttons.
@@ -64,7 +62,7 @@ Show a confirmation dialog with OK and Cancel buttons.
 | ------------- | --------------------------------------------------------- | -------------------------------- |
 | **`options`** | <code><a href="#confirmoptions">ConfirmOptions</a></code> | - Confirm configuration options. |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#confirmresult">ConfirmResult</a>&gt;</code>
 
 --------------------
 
@@ -72,7 +70,7 @@ Show a confirmation dialog with OK and Cancel buttons.
 ### prompt(...)
 
 ```typescript
-prompt(options: PromptOptions) => any
+prompt(options: PromptOptions) => Promise<PromptResult>
 ```
 
 Show a prompt dialog with a text input field.
@@ -81,7 +79,7 @@ Show a prompt dialog with a text input field.
 | ------------- | ------------------------------------------------------- | ------------------------------- |
 | **`options`** | <code><a href="#promptoptions">PromptOptions</a></code> | - Prompt configuration options. |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#promptresult">PromptResult</a>&gt;</code>
 
 --------------------
 
@@ -89,7 +87,7 @@ Show a prompt dialog with a text input field.
 ### singleSelect(...)
 
 ```typescript
-singleSelect(options: SingleSelectOptions) => any
+singleSelect(options: SingleSelectOptions) => Promise<SingleSelectResult>
 ```
 
 Show a single-select dialog where the user picks one option.
@@ -98,7 +96,7 @@ Show a single-select dialog where the user picks one option.
 | ------------- | ------------------------------------------------------------------- | -------------------------------------- |
 | **`options`** | <code><a href="#singleselectoptions">SingleSelectOptions</a></code> | - Single select configuration options. |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#singleselectresult">SingleSelectResult</a>&gt;</code>
 
 --------------------
 
@@ -106,7 +104,7 @@ Show a single-select dialog where the user picks one option.
 ### multiSelect(...)
 
 ```typescript
-multiSelect(options: MultiSelectOptions) => any
+multiSelect(options: MultiSelectOptions) => Promise<MultiSelectResult>
 ```
 
 Show a multi-select dialog where the user picks one or more options.
@@ -115,7 +113,7 @@ Show a multi-select dialog where the user picks one or more options.
 | ------------- | ----------------------------------------------------------------- | ------------------------------------- |
 | **`options`** | <code><a href="#multiselectoptions">MultiSelectOptions</a></code> | - Multi select configuration options. |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#multiselectresult">MultiSelectResult</a>&gt;</code>
 
 --------------------
 
@@ -123,7 +121,7 @@ Show a multi-select dialog where the user picks one or more options.
 ### sheet(...)
 
 ```typescript
-sheet(options: SheetOptions) => any
+sheet(options: SheetOptions) => Promise<SheetResult>
 ```
 
 Show a sheet dialog with a header, title, and structured data rows.
@@ -132,7 +130,7 @@ Show a sheet dialog with a header, title, and structured data rows.
 | ------------- | ----------------------------------------------------- | ------------------------------ |
 | **`options`** | <code><a href="#sheetoptions">SheetOptions</a></code> | - Sheet configuration options. |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#sheetresult">SheetResult</a>&gt;</code>
 
 --------------------
 
@@ -140,7 +138,7 @@ Show a sheet dialog with a header, title, and structured data rows.
 ### messageSheet(...)
 
 ```typescript
-messageSheet(options: MessageSheetOptions) => any
+messageSheet(options: MessageSheetOptions) => Promise<MessageSheetResult>
 ```
 
 Show a message sheet dialog with an optional header logo, title, and message.
@@ -149,7 +147,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | ------------- | ------------------------------------------------------------------- | -------------------------------------- |
 | **`options`** | <code><a href="#messagesheetoptions">MessageSheetOptions</a></code> | - Message sheet configuration options. |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#messagesheetresult">MessageSheetResult</a>&gt;</code>
 
 --------------------
 
@@ -164,6 +162,13 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`buttonTitle`** | <code>string</code> | Title for the dismiss button. | <code>"OK"</code> |
 
 
+#### ConfirmResult
+
+| Prop        | Type                 | Description                                                 |
+| ----------- | -------------------- | ----------------------------------------------------------- |
+| **`value`** | <code>boolean</code> | Whether the user confirmed (`true`) or cancelled (`false`). |
+
+
 #### ConfirmOptions
 
 | Prop                    | Type                | Description                        | Default               |
@@ -172,11 +177,12 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`cancelButtonTitle`** | <code>string</code> | Title for the cancel button.       | <code>"Cancel"</code> |
 
 
-#### ConfirmResult
+#### PromptResult
 
-| Prop        | Type                 | Description                                                 |
-| ----------- | -------------------- | ----------------------------------------------------------- |
-| **`value`** | <code>boolean</code> | Whether the user confirmed (`true`) or cancelled (`false`). |
+| Prop            | Type                 | Description                                              |
+| --------------- | -------------------- | -------------------------------------------------------- |
+| **`value`**     | <code>string</code>  | The text entered by the user. Empty string if cancelled. |
+| **`cancelled`** | <code>boolean</code> | Whether the user cancelled the dialog.                   |
 
 
 #### PromptOptions
@@ -190,22 +196,22 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`focusInput`**        | <code>boolean</code> | Whether to automatically focus the input field and open the keyboard when the dialog appears. Note: On iOS, basic (non-fullscreen) dialogs always auto-focus the input field due to UIAlertController's built-in behavior. This option only takes effect on iOS when using fullscreen mode (`mode: 'fullscreen'`). On Android and web, this works for all modes. | <code>false</code>    |
 
 
-#### PromptResult
+#### SingleSelectResult
 
-| Prop            | Type                 | Description                                              |
-| --------------- | -------------------- | -------------------------------------------------------- |
-| **`value`**     | <code>string</code>  | The text entered by the user. Empty string if cancelled. |
-| **`cancelled`** | <code>boolean</code> | Whether the user cancelled the dialog.                   |
+| Prop            | Type                        | Description                                               |
+| --------------- | --------------------------- | --------------------------------------------------------- |
+| **`value`**     | <code>string \| null</code> | The value of the selected option, or `null` if cancelled. |
+| **`cancelled`** | <code>boolean</code>        | Whether the user cancelled the dialog.                    |
 
 
 #### SingleSelectOptions
 
-| Prop                    | Type                | Description                               | Default               |
-| ----------------------- | ------------------- | ----------------------------------------- | --------------------- |
-| **`options`**           | <code>{}</code>     | List of options to display for selection. |                       |
-| **`selectedValue`**     | <code>string</code> | Value of the initially selected option.   |                       |
-| **`okButtonTitle`**     | <code>string</code> | Title for the confirmation button.        | <code>"OK"</code>     |
-| **`cancelButtonTitle`** | <code>string</code> | Title for the cancel button.              | <code>"Cancel"</code> |
+| Prop                    | Type                        | Description                               | Default               |
+| ----------------------- | --------------------------- | ----------------------------------------- | --------------------- |
+| **`options`**           | <code>SelectOption[]</code> | List of options to display for selection. |                       |
+| **`selectedValue`**     | <code>string</code>         | Value of the initially selected option.   |                       |
+| **`okButtonTitle`**     | <code>string</code>         | Title for the confirmation button.        | <code>"OK"</code>     |
+| **`cancelButtonTitle`** | <code>string</code>         | Title for the cancel button.              | <code>"Cancel"</code> |
 
 
 #### SelectOption
@@ -216,30 +222,29 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`value`** | <code>string</code> | Value returned when the option is selected. |
 
 
-#### SingleSelectResult
+#### MultiSelectResult
 
-| Prop            | Type                        | Description                                               |
-| --------------- | --------------------------- | --------------------------------------------------------- |
-| **`value`**     | <code>string \| null</code> | The value of the selected option, or `null` if cancelled. |
-| **`cancelled`** | <code>boolean</code>        | Whether the user cancelled the dialog.                    |
+| Prop            | Type                  | Description                                                   |
+| --------------- | --------------------- | ------------------------------------------------------------- |
+| **`values`**    | <code>string[]</code> | The values of the selected options. Empty array if cancelled. |
+| **`cancelled`** | <code>boolean</code>  | Whether the user cancelled the dialog.                        |
 
 
 #### MultiSelectOptions
 
-| Prop                    | Type                | Description                               | Default               |
-| ----------------------- | ------------------- | ----------------------------------------- | --------------------- |
-| **`options`**           | <code>{}</code>     | List of options to display for selection. |                       |
-| **`selectedValues`**    | <code>{}</code>     | Values of the initially selected options. |                       |
-| **`okButtonTitle`**     | <code>string</code> | Title for the confirmation button.        | <code>"OK"</code>     |
-| **`cancelButtonTitle`** | <code>string</code> | Title for the cancel button.              | <code>"Cancel"</code> |
+| Prop                    | Type                        | Description                               | Default               |
+| ----------------------- | --------------------------- | ----------------------------------------- | --------------------- |
+| **`options`**           | <code>SelectOption[]</code> | List of options to display for selection. |                       |
+| **`selectedValues`**    | <code>string[]</code>       | Values of the initially selected options. |                       |
+| **`okButtonTitle`**     | <code>string</code>         | Title for the confirmation button.        | <code>"OK"</code>     |
+| **`cancelButtonTitle`** | <code>string</code>         | Title for the cancel button.              | <code>"Cancel"</code> |
 
 
-#### MultiSelectResult
+#### SheetResult
 
-| Prop            | Type                 | Description                                                   |
-| --------------- | -------------------- | ------------------------------------------------------------- |
-| **`values`**    | <code>{}</code>      | The values of the selected options. Empty array if cancelled. |
-| **`cancelled`** | <code>boolean</code> | Whether the user cancelled the dialog.                        |
+| Prop            | Type                 | Description                           |
+| --------------- | -------------------- | ------------------------------------- |
+| **`confirmed`** | <code>boolean</code> | True if confirmed, false if cancelled |
 
 
 #### SheetOptions
@@ -249,7 +254,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`headerLogo`**         | <code>string</code>                               | Header logo - supports base64 data URL or HTTP/HTTPS URL |
 | **`title`**              | <code>string</code>                               | Sheet title                                              |
 | **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and rows       |
-| **`rows`**               | <code>{}</code>                                   | Description rows                                         |
+| **`rows`**               | <code>SheetRow[]</code>                           | Description rows                                         |
 | **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |
 | **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                              |
@@ -264,7 +269,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`value`** | <code>string</code> | Optional value displayed on the right                           |
 
 
-#### SheetResult
+#### MessageSheetResult
 
 | Prop            | Type                 | Description                           |
 | --------------- | -------------------- | ------------------------------------- |
@@ -282,13 +287,6 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |
 | **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                              |
-
-
-#### MessageSheetResult
-
-| Prop            | Type                 | Description                           |
-| --------------- | -------------------- | ------------------------------------- |
-| **`confirmed`** | <code>boolean</code> | True if confirmed, false if cancelled |
 
 
 ### Type Aliases
