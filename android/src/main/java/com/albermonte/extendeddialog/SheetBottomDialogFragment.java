@@ -49,6 +49,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
     private static final String ARG_CONFIRM_BUTTON = "confirmButton";
     private static final String ARG_CANCEL_BUTTON = "cancelButton";
     private static final String ARG_FULLSCREEN = "fullscreen";
+    private static final String ARG_SUBTITLE = "subtitle";
     private static final String ARG_IS_MESSAGE_SHEET = "isMessageSheet";
 
     private ExtendedDialog.SheetCallback sheetCallback;
@@ -68,6 +69,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
 
     public static SheetBottomDialogFragment newInstance(
         String title,
+        String subtitle,
         String headerLogo,
         String rowsJson,
         String confirmButton,
@@ -78,6 +80,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         SheetBottomDialogFragment fragment = new SheetBottomDialogFragment();
         Bundle args = new Bundle();
         args.putString(ARG_TITLE, title);
+        args.putString(ARG_SUBTITLE, subtitle);
         args.putString(ARG_HEADER_LOGO, headerLogo);
         args.putString(ARG_ROWS, rowsJson);
         args.putString(ARG_CONFIRM_BUTTON, confirmButton);
@@ -93,6 +96,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
 
     public static SheetBottomDialogFragment newMessageInstance(
         String title,
+        String subtitle,
         String headerLogo,
         String message,
         String confirmButton,
@@ -103,6 +107,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         SheetBottomDialogFragment fragment = new SheetBottomDialogFragment();
         Bundle args = new Bundle();
         args.putString(ARG_TITLE, title);
+        args.putString(ARG_SUBTITLE, subtitle);
         args.putString(ARG_HEADER_LOGO, headerLogo);
         args.putString(ARG_MESSAGE, message);
         args.putString(ARG_CONFIRM_BUTTON, confirmButton);
@@ -144,6 +149,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         }
 
         String title = args.getString(ARG_TITLE, "");
+        String subtitle = args.getString(ARG_SUBTITLE);
         String headerLogo = args.getString(ARG_HEADER_LOGO);
         String rowsJson = args.getString(ARG_ROWS);
         String message = args.getString(ARG_MESSAGE, "");
@@ -225,12 +231,14 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             }
             if (radiusPx > 0) {
                 logoView.setClipToOutline(true);
-                logoView.setOutlineProvider(new android.view.ViewOutlineProvider() {
-                    @Override
-                    public void getOutline(android.view.View view, android.graphics.Outline outline) {
-                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+                logoView.setOutlineProvider(
+                    new android.view.ViewOutlineProvider() {
+                        @Override
+                        public void getOutline(android.view.View view, android.graphics.Outline outline) {
+                            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+                        }
                     }
-                });
+                );
             }
 
             headerLayout.addView(logoView);
@@ -256,17 +264,40 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             );
-            titleParams.bottomMargin = (int) (20 * density);
+            titleParams.bottomMargin = (subtitle != null && !subtitle.isEmpty()) ? (int) (4 * density) : (int) (20 * density);
             titleView.setLayoutParams(titleParams);
             headerLayout.addView(titleView);
+        }
+
+        // Subtitle
+        if (subtitle != null && !subtitle.isEmpty()) {
+            TextView subtitleView = new TextView(ctx);
+            subtitleView.setText(subtitle);
+            TextViewCompat.setTextAppearance(subtitleView, com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            if (styleOptions.getMessageColor() != null) {
+                subtitleView.setTextColor(styleOptions.getMessageColor());
+            } else {
+                int secondaryColor = MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFF49454F);
+                subtitleView.setTextColor(secondaryColor);
+            }
+            if (styleOptions.getMessageFontSize() != null) {
+                subtitleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
+            }
+            subtitleView.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            subtitleParams.bottomMargin = (int) (20 * density);
+            subtitleView.setLayoutParams(subtitleParams);
+            headerLayout.addView(subtitleView);
         }
         rootLayout.addView(headerLayout);
 
         // ScrollView for body content (rows/message only)
         scrollView = new ScrollView(ctx);
         scrollView.setFillViewport(true);
-        scrollView.setLayoutParams(new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         bodyLayout = new LinearLayout(ctx);
         bodyLayout.setOrientation(LinearLayout.VERTICAL);
@@ -279,9 +310,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             int messagePadding = (int) (16 * density);
             messageContainer.setPadding(messagePadding, messagePadding, messagePadding, messagePadding);
 
-            ShapeAppearanceModel messageShape = ShapeAppearanceModel.builder()
-                .setAllCornerSizes(12 * density)
-                .build();
+            ShapeAppearanceModel messageShape = ShapeAppearanceModel.builder().setAllCornerSizes(12 * density).build();
             MaterialShapeDrawable messageBackground = new MaterialShapeDrawable(messageShape);
             int surfaceVariant = MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFE7E0EC);
             messageBackground.setFillColor(ColorStateList.valueOf(surfaceVariant));
@@ -449,21 +478,23 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                 // Prevent dragging down in fullscreen mode
                 behavior.setDraggable(false);
                 setExpandedButtonOffset(true);
-                behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-                    @Override
-                    public void onStateChanged(@NonNull View sheet, int newState) {
-                        if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                behavior.addBottomSheetCallback(
+                    new BottomSheetBehavior.BottomSheetCallback() {
+                        @Override
+                        public void onStateChanged(@NonNull View sheet, int newState) {
+                            if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                                setExpandedButtonOffset(true);
+                                setRootHeight(getVisibleSheetHeight(sheet));
+                            }
+                        }
+
+                        @Override
+                        public void onSlide(@NonNull View sheet, float slideOffset) {
                             setExpandedButtonOffset(true);
                             setRootHeight(getVisibleSheetHeight(sheet));
                         }
                     }
-
-                    @Override
-                    public void onSlide(@NonNull View sheet, float slideOffset) {
-                        setExpandedButtonOffset(true);
-                        setRootHeight(getVisibleSheetHeight(sheet));
-                    }
-                });
+                );
                 bottomSheet.post(() -> setRootHeight(getVisibleSheetHeight(bottomSheet)));
             } else {
                 // Multi-stop bottom sheet: drag up to fullscreen, drag down to dismiss
@@ -476,30 +507,27 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
                 behavior.setHideable(true);
                 behavior.setDraggable(true);
 
-                behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-                    @Override
-                    public void onStateChanged(@NonNull View sheet, int newState) {
-                        if (
-                            newState == BottomSheetBehavior.STATE_HALF_EXPANDED ||
-                            newState == BottomSheetBehavior.STATE_EXPANDED
-                        ) {
-                            setExpandedButtonOffset(newState == BottomSheetBehavior.STATE_EXPANDED);
+                behavior.addBottomSheetCallback(
+                    new BottomSheetBehavior.BottomSheetCallback() {
+                        @Override
+                        public void onStateChanged(@NonNull View sheet, int newState) {
+                            if (newState == BottomSheetBehavior.STATE_HALF_EXPANDED || newState == BottomSheetBehavior.STATE_EXPANDED) {
+                                setExpandedButtonOffset(newState == BottomSheetBehavior.STATE_EXPANDED);
+                                setRootHeight(getVisibleSheetHeight(sheet));
+                            }
+                        }
+
+                        @Override
+                        public void onSlide(@NonNull View sheet, float slideOffset) {
+                            setExpandedButtonOffset(slideOffset >= 0.9f);
                             setRootHeight(getVisibleSheetHeight(sheet));
                         }
                     }
-
-                    @Override
-                    public void onSlide(@NonNull View sheet, float slideOffset) {
-                        setExpandedButtonOffset(slideOffset >= 0.9f);
-                        setRootHeight(getVisibleSheetHeight(sheet));
-                    }
-                });
+                );
 
                 bottomSheet.post(() -> {
                     int screenHeight = getResources().getDisplayMetrics().heightPixels;
-                    int width = bottomSheet.getWidth() > 0
-                        ? bottomSheet.getWidth()
-                        : getResources().getDisplayMetrics().widthPixels;
+                    int width = bottomSheet.getWidth() > 0 ? bottomSheet.getWidth() : getResources().getDisplayMetrics().widthPixels;
 
                     int widthSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
                     int heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
@@ -592,12 +620,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         }
         int expandedExtraBottomPadding = applyExpandedButtonOffset ? buttonExpandedExtraPaddingPx : 0;
         int resolvedBottomPadding = buttonBottomBasePaddingPx + buttonBottomInsetsPx + expandedExtraBottomPadding;
-        buttonContainer.setPadding(
-            buttonHorizontalPaddingPx,
-            buttonTopPaddingPx,
-            buttonHorizontalPaddingPx,
-            resolvedBottomPadding
-        );
+        buttonContainer.setPadding(buttonHorizontalPaddingPx, buttonTopPaddingPx, buttonHorizontalPaddingPx, resolvedBottomPadding);
     }
 
     private LinearLayout createSheetRow(

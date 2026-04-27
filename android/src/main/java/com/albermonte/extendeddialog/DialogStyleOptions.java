@@ -171,7 +171,9 @@ public class DialogStyleOptions {
         options.messageFontSize = bundle.containsKey(KEY_MESSAGE_FONT_SIZE) ? bundle.getFloat(KEY_MESSAGE_FONT_SIZE) : null;
         options.buttonFontSize = bundle.containsKey(KEY_BUTTON_FONT_SIZE) ? bundle.getFloat(KEY_BUTTON_FONT_SIZE) : null;
         options.contentButtonSpacing = bundle.containsKey(KEY_CONTENT_BUTTON_SPACING) ? bundle.getFloat(KEY_CONTENT_BUTTON_SPACING) : null;
-        options.headerLogoCornerRadius = bundle.containsKey(KEY_HEADER_LOGO_CORNER_RADIUS) ? bundle.getFloat(KEY_HEADER_LOGO_CORNER_RADIUS) : null;
+        options.headerLogoCornerRadius = bundle.containsKey(KEY_HEADER_LOGO_CORNER_RADIUS)
+            ? bundle.getFloat(KEY_HEADER_LOGO_CORNER_RADIUS)
+            : null;
         return options;
     }
 }

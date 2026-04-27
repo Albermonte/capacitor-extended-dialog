@@ -211,6 +211,7 @@ public class ExtendedDialogPlugin extends Plugin {
     @PluginMethod
     public void sheet(PluginCall call) {
         String title = call.getString("title");
+        String subtitle = call.getString("subtitle");
         String headerLogo = call.getString("headerLogo");
         JSArray rowsArray = call.getArray("rows");
         String confirmButtonTitle = call.getString("confirmButtonTitle");
@@ -235,6 +236,7 @@ public class ExtendedDialogPlugin extends Plugin {
             implementation.showSheet(
                 getActivity(),
                 title,
+                subtitle,
                 headerLogo,
                 rows,
                 confirmButtonTitle,
@@ -255,6 +257,7 @@ public class ExtendedDialogPlugin extends Plugin {
     @PluginMethod
     public void messageSheet(PluginCall call) {
         String title = call.getString("title");
+        String subtitle = call.getString("subtitle");
         String message = call.getString("message");
         String headerLogo = call.getString("headerLogo");
         String confirmButtonTitle = call.getString("confirmButtonTitle");
@@ -276,6 +279,7 @@ public class ExtendedDialogPlugin extends Plugin {
         implementation.showMessageSheet(
             getActivity(),
             title,
+            subtitle,
             message,
             headerLogo,
             confirmButtonTitle,

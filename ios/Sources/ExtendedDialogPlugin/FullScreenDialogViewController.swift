@@ -24,6 +24,7 @@ public class FullScreenDialogViewController: UIViewController {
     // MARK: - Sheet Properties
 
     var headerLogo: String?
+    var subtitle: String?
     var sheetRows: [SheetRow]?
 
     // MARK: - Properties
@@ -656,7 +657,27 @@ public class FullScreenDialogViewController: UIViewController {
             sheetTitleLabel.textColor = titleColor
         }
         sheetContainer.addArrangedSubview(sheetTitleLabel)
-        sheetContainer.setCustomSpacing(24, after: sheetTitleLabel)
+
+        if let subtitleText = subtitle, !subtitleText.isEmpty {
+            sheetContainer.setCustomSpacing(4, after: sheetTitleLabel)
+
+            let subtitleLabel = UILabel()
+            subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+            subtitleLabel.text = subtitleText
+            let subtitleFontSize = styleOptions?.messageFontSize ?? 14
+            subtitleLabel.font = .systemFont(ofSize: subtitleFontSize, weight: .regular)
+            subtitleLabel.textAlignment = .center
+            subtitleLabel.numberOfLines = 0
+            if let messageColor = styleOptions?.messageColor {
+                subtitleLabel.textColor = messageColor
+            } else {
+                subtitleLabel.textColor = .secondaryLabel
+            }
+            sheetContainer.addArrangedSubview(subtitleLabel)
+            sheetContainer.setCustomSpacing(24, after: subtitleLabel)
+        } else {
+            sheetContainer.setCustomSpacing(24, after: sheetTitleLabel)
+        }
 
         // Rows container with rounded background
         let rowsBackground = UIView()
@@ -770,7 +791,27 @@ public class FullScreenDialogViewController: UIViewController {
             sheetTitleLabel.textColor = titleColor
         }
         sheetContainer.addArrangedSubview(sheetTitleLabel)
-        sheetContainer.setCustomSpacing(16, after: sheetTitleLabel)
+
+        if let subtitleText = subtitle, !subtitleText.isEmpty {
+            sheetContainer.setCustomSpacing(4, after: sheetTitleLabel)
+
+            let subtitleLabel = UILabel()
+            subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+            subtitleLabel.text = subtitleText
+            let subtitleFontSize = styleOptions?.messageFontSize ?? 14
+            subtitleLabel.font = .systemFont(ofSize: subtitleFontSize, weight: .regular)
+            subtitleLabel.textAlignment = .center
+            subtitleLabel.numberOfLines = 0
+            if let messageColor = styleOptions?.messageColor {
+                subtitleLabel.textColor = messageColor
+            } else {
+                subtitleLabel.textColor = .secondaryLabel
+            }
+            sheetContainer.addArrangedSubview(subtitleLabel)
+            sheetContainer.setCustomSpacing(16, after: subtitleLabel)
+        } else {
+            sheetContainer.setCustomSpacing(16, after: sheetTitleLabel)
+        }
 
         // Message container with background
         let messageBackground = UIView()

@@ -188,6 +188,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("rows is required")
             return
         }
+        let subtitle = call.getString("subtitle")
         let headerLogo = call.getString("headerLogo")
         let confirmButtonTitle = call.getString("confirmButtonTitle")
         let cancelButtonTitle = call.getString("cancelButtonTitle")
@@ -197,6 +198,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
 
         implementation.showSheet(
             title: title,
+            subtitle: subtitle,
             headerLogo: headerLogo,
             rows: rowsArray,
             confirmButtonTitle: confirmButtonTitle,
@@ -217,6 +219,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("message is required")
             return
         }
+        let subtitle = call.getString("subtitle")
         let headerLogo = call.getString("headerLogo")
         let confirmButtonTitle = call.getString("confirmButtonTitle")
         let cancelButtonTitle = call.getString("cancelButtonTitle")
@@ -226,6 +229,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
 
         implementation.showMessageSheet(
             title: title,
+            subtitle: subtitle,
             message: message,
             headerLogo: headerLogo,
             confirmButtonTitle: confirmButtonTitle,

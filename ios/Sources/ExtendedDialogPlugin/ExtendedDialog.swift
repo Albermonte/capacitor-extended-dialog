@@ -422,6 +422,7 @@ public struct DialogStyleOptions {
 
     public func showSheet(
         title: String,
+        subtitle: String?,
         headerLogo: String?,
         rows: [[String: String]],
         confirmButtonTitle: String?,
@@ -437,15 +438,16 @@ public struct DialogStyleOptions {
             }
 
             if fullscreen {
-                self.showFullScreenSheet(title: title, headerLogo: headerLogo, rows: sheetRows, confirmButtonTitle: confirmButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
+                self.showFullScreenSheet(title: title, subtitle: subtitle, headerLogo: headerLogo, rows: sheetRows, confirmButtonTitle: confirmButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
             } else {
-                self.showBasicSheet(title: title, headerLogo: headerLogo, rows: sheetRows, confirmButtonTitle: confirmButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
+                self.showBasicSheet(title: title, subtitle: subtitle, headerLogo: headerLogo, rows: sheetRows, confirmButtonTitle: confirmButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
             }
         }
     }
 
     public func showMessageSheet(
         title: String,
+        subtitle: String?,
         message: String,
         headerLogo: String?,
         confirmButtonTitle: String?,
@@ -470,6 +472,7 @@ public struct DialogStyleOptions {
             )
             vc.sheetCallback = callback
             vc.headerLogo = headerLogo
+            vc.subtitle = subtitle
 
             if fullscreen {
                 self.presentFullScreen(vc)
@@ -479,7 +482,7 @@ public struct DialogStyleOptions {
         }
     }
 
-    private func showBasicSheet(title: String, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
+    private func showBasicSheet(title: String, subtitle: String?, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
         // Use FullScreenDialogViewController in sheet presentation mode for basic sheet
         let vc = FullScreenDialogViewController(
             dialogType: .sheet,
@@ -496,11 +499,12 @@ public struct DialogStyleOptions {
         )
         vc.sheetCallback = callback
         vc.headerLogo = headerLogo
+        vc.subtitle = subtitle
         vc.sheetRows = rows
         presentBasicSheet(vc)
     }
 
-    private func showFullScreenSheet(title: String, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
+    private func showFullScreenSheet(title: String, subtitle: String?, headerLogo: String?, rows: [SheetRow], confirmButtonTitle: String?, cancelButtonTitle: String?, styleOptions: DialogStyleOptions?, callback: @escaping SheetCallback) {
         let vc = FullScreenDialogViewController(
             dialogType: .sheet,
             dialogTitle: title,
@@ -516,6 +520,7 @@ public struct DialogStyleOptions {
         )
         vc.sheetCallback = callback
         vc.headerLogo = headerLogo
+        vc.subtitle = subtitle
         vc.sheetRows = rows
         presentFullScreen(vc)
     }

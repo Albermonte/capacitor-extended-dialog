@@ -248,6 +248,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | ------------------------ | ------------------------------------------------- | -------------------------------------------------------- |
 | **`headerLogo`**         | <code>string</code>                               | Header logo - supports base64 data URL or HTTP/HTTPS URL |
 | **`title`**              | <code>string</code>                               | Sheet title                                              |
+| **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and rows       |
 | **`rows`**               | <code>{}</code>                                   | Description rows                                         |
 | **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |
@@ -276,6 +277,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | ------------------------ | ------------------------------------------------- | -------------------------------------------------------- |
 | **`headerLogo`**         | <code>string</code>                               | Header logo - supports base64 data URL or HTTP/HTTPS URL |
 | **`title`**              | <code>string</code>                               | Sheet title                                              |
+| **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and message    |
 | **`message`**            | <code>string</code>                               | Message body displayed in the sheet                      |
 | **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |

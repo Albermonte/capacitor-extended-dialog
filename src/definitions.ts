@@ -284,6 +284,8 @@ export interface SheetOptions extends DialogStyleOptions {
   headerLogo?: string;
   /** Sheet title */
   title: string;
+  /** Optional subtitle displayed between title and rows */
+  subtitle?: string;
   /** Description rows */
   rows: SheetRow[];
   /** Confirm button title */
@@ -299,6 +301,8 @@ export interface MessageSheetOptions extends DialogStyleOptions {
   headerLogo?: string;
   /** Sheet title */
   title: string;
+  /** Optional subtitle displayed between title and message */
+  subtitle?: string;
   /** Message body displayed in the sheet */
   message: string;
   /** Confirm button title */

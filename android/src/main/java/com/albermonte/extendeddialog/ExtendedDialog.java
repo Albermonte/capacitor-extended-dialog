@@ -744,6 +744,7 @@ public class ExtendedDialog {
     public void showSheet(
         Activity activity,
         String title,
+        String subtitle,
         String headerLogo,
         JSONArray rows,
         String confirmButtonTitle,
@@ -760,6 +761,7 @@ public class ExtendedDialog {
         fragmentActivity.runOnUiThread(() -> {
             SheetBottomDialogFragment fragment = SheetBottomDialogFragment.newInstance(
                 title,
+                subtitle,
                 headerLogo,
                 rows.toString(),
                 confirmButtonTitle != null ? confirmButtonTitle : "Confirm",
@@ -775,6 +777,7 @@ public class ExtendedDialog {
     public void showMessageSheet(
         Activity activity,
         String title,
+        String subtitle,
         String message,
         String headerLogo,
         String confirmButtonTitle,
@@ -791,6 +794,7 @@ public class ExtendedDialog {
         fragmentActivity.runOnUiThread(() -> {
             SheetBottomDialogFragment fragment = SheetBottomDialogFragment.newMessageInstance(
                 title,
+                subtitle,
                 headerLogo,
                 message,
                 confirmButtonTitle != null ? confirmButtonTitle : "Confirm",

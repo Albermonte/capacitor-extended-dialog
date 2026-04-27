@@ -243,6 +243,18 @@
             <p>Header logo with no rounding (0)</p>
           </ion-label>
         </ion-item>
+        <ion-item button @click="showSheetWithSubtitle()">
+          <ion-label>
+            <h2>Sheet with Subtitle</h2>
+            <p>Subtitle between title and rows</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showSheetWithLogoAndSubtitle()">
+          <ion-label>
+            <h2>Sheet with Logo & Subtitle</h2>
+            <p>Fullscreen with header logo and subtitle</p>
+          </ion-label>
+        </ion-item>
       </ion-list>
 
       <!-- Bug Fix Tests Section -->
@@ -860,6 +872,45 @@ async function showSheetWithSquareLogo() {
   lastResult.value = {
     type: 'sheetSquareLogo',
     headerLogoCornerRadius: 0,
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithSubtitle() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Confirm Purchase',
+    subtitle: 'Review the details below before proceeding',
+    rows: [
+      { title: 'Item', value: 'Wireless Headphones' },
+      { title: 'Price', value: '$149.99' },
+      { title: 'Shipping', value: 'Free' },
+    ],
+    confirmButtonTitle: 'Buy Now',
+    cancelButtonTitle: 'Cancel',
+  });
+  lastResult.value = {
+    type: 'sheetWithSubtitle',
+    confirmed: result.confirmed
+  };
+}
+
+async function showSheetWithLogoAndSubtitle() {
+  const result = await ExtendedDialog.sheet({
+    title: 'Transfer Summary',
+    subtitle: 'Please verify all information is correct',
+    headerLogo: 'https://picsum.photos/seed/transfer/80',
+    rows: [
+      { title: 'From', value: 'Main Account' },
+      { title: 'To', value: 'Savings ••8832' },
+      { title: 'Amount', value: '$1,250.00' },
+      { title: 'Fee', value: '$0.00' },
+    ],
+    confirmButtonTitle: 'Confirm Transfer',
+    cancelButtonTitle: 'Cancel',
+    mode: 'fullscreen',
+  });
+  lastResult.value = {
+    type: 'sheetLogoAndSubtitle',
     confirmed: result.confirmed
   };
 }

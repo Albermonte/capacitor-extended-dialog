@@ -298,6 +298,15 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       titleEl.style.cssText = `margin: 0; font-size: ${titleFontSize}px; font-weight: 600; color: ${titleColor}; text-align: center;`;
       headerSection.appendChild(titleEl);
 
+      if (options.subtitle) {
+        const subtitleEl = document.createElement('p');
+        subtitleEl.textContent = options.subtitle;
+        const subtitleFontSize = options.messageFontSize ?? 14;
+        const subtitleColor = options.messageColor ?? '#666';
+        subtitleEl.style.cssText = `margin: 4px 0 0 0; font-size: ${subtitleFontSize}px; font-weight: 400; color: ${subtitleColor}; text-align: center;`;
+        headerSection.appendChild(subtitleEl);
+      }
+
       dialog.appendChild(headerSection);
 
       // Rows container
@@ -417,8 +426,17 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       titleEl.textContent = options.title;
       const titleFontSize = options.titleFontSize ?? 20;
       const titleColor = options.titleColor ?? 'inherit';
-      titleEl.style.cssText = `margin: 0 0 16px 0; font-size: ${titleFontSize}px; font-weight: 600; color: ${titleColor}; text-align: center;`;
+      titleEl.style.cssText = `margin: 0 0 ${options.subtitle ? '4px' : '16px'} 0; font-size: ${titleFontSize}px; font-weight: 600; color: ${titleColor}; text-align: center;`;
       content.appendChild(titleEl);
+
+      if (options.subtitle) {
+        const subtitleEl = document.createElement('p');
+        subtitleEl.textContent = options.subtitle;
+        const subtitleFontSize = options.messageFontSize ?? 14;
+        const subtitleColor = options.messageColor ?? '#666';
+        subtitleEl.style.cssText = `margin: 0 0 16px 0; font-size: ${subtitleFontSize}px; font-weight: 400; color: ${subtitleColor}; text-align: center;`;
+        content.appendChild(subtitleEl);
+      }
 
       const messageEl = document.createElement('p');
       messageEl.textContent = options.message;
@@ -427,8 +445,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       messageEl.style.cssText = `margin: 0; font-size: ${messageFontSize}px; color: ${messageColor}; white-space: pre-wrap; word-break: break-word;`;
 
       const messageContainer = document.createElement('div');
-      messageContainer.style.cssText =
-        'background: #E5E5EA; border-radius: 12px; padding: 16px; margin: 0;';
+      messageContainer.style.cssText = 'background: #E5E5EA; border-radius: 12px; padding: 16px; margin: 0;';
       messageContainer.appendChild(messageEl);
       content.appendChild(messageContainer);
 
