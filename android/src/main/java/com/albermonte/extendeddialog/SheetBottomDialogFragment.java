@@ -7,7 +7,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
@@ -51,6 +50,8 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
     private static final String ARG_FULLSCREEN = "fullscreen";
     private static final String ARG_SUBTITLE = "subtitle";
     private static final String ARG_IS_MESSAGE_SHEET = "isMessageSheet";
+
+    private static final Executor IMAGE_EXECUTOR = Executors.newCachedThreadPool();
 
     private ExtendedDialog.SheetCallback sheetCallback;
     private boolean dismissed = false;
@@ -706,26 +707,30 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
     }
 
     private void loadImageAsync(ImageView imageView, String imageUrl) {
-        Executor executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
+        if (imageUrl == null || imageUrl.isEmpty()) return;
+        IMAGE_EXECUTOR.execute(() -> {
             try {
-                Bitmap bitmap;
-                if (imageUrl.startsWith("data:")) {
-                    String base64Data = imageUrl.substring(imageUrl.indexOf(",") + 1);
-                    byte[] decodedBytes = Base64.decode(base64Data, Base64.DEFAULT);
-                    bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-                } else {
-                    InputStream inputStream = new URL(imageUrl).openStream();
-                    bitmap = BitmapFactory.decodeStream(inputStream);
-                    inputStream.close();
-                }
+                Bitmap bitmap = decodeImage(imageUrl, imageView);
                 if (bitmap != null) {
                     imageView.post(() -> imageView.setImageBitmap(bitmap));
                 }
             } catch (Exception e) {
-                // Silently fail - image won't be displayed
+                android.util.Log.w("ExtendedDialog", "Failed to load image: " + e.getMessage());
             }
         });
+    }
+
+    private static Bitmap decodeImage(String imageUrl, ImageView imageView) throws Exception {
+        if (SvgImageLoader.isSvgSource(imageUrl)) {
+            return SvgImageLoader.render(imageUrl, imageView);
+        }
+        if (SvgImageLoader.isDataUrl(imageUrl)) {
+            byte[] decodedBytes = SvgImageLoader.decodeDataUrl(imageUrl);
+            return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+        }
+        try (InputStream inputStream = new URL(imageUrl).openStream()) {
+            return BitmapFactory.decodeStream(inputStream);
+        }
     }
 
     private void handleConfirm() {

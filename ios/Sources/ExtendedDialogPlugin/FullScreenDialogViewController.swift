@@ -946,25 +946,30 @@ public class FullScreenDialogViewController: UIViewController {
     }
 
     private func loadImage(from urlString: String, into imageView: UIImageView) {
-        // Check if it's a base64 data URL
-        if urlString.hasPrefix("data:") {
-            if let commaIndex = urlString.firstIndex(of: ",") {
-                let base64String = String(urlString[urlString.index(after: commaIndex)...])
-                if let imageData = Data(base64Encoded: base64String),
-                   let image = UIImage(data: imageData) {
-                    imageView.image = image
+        if SvgImageLoader.isSvgSource(urlString) {
+            let targetSize = imageView.bounds.size == .zero
+                ? CGSize(width: 64, height: 64)
+                : imageView.bounds.size
+            SvgImageLoader.render(source: urlString, targetSize: targetSize) { [weak imageView] image in
+                imageView?.image = image
+            }
+            return
+        }
+        if SvgImageLoader.isDataUrl(urlString) {
+            if let imageData = SvgImageLoader.decodeDataUrl(urlString),
+               let image = UIImage(data: imageData) {
+                imageView.image = image
+            }
+            return
+        }
+        guard let url = URL(string: urlString) else { return }
+        URLSession.shared.dataTask(with: url) { [weak imageView] data, _, _ in
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    imageView?.image = image
                 }
             }
-        } else if let url = URL(string: urlString) {
-            // Load from HTTP/HTTPS URL asynchronously
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        imageView.image = image
-                    }
-                }
-            }.resume()
-        }
+        }.resume()
     }
 
     private func applyLiquidGlassStyle() {

@@ -249,24 +249,24 @@ Show a message sheet dialog with an optional header logo, title, and message.
 
 #### SheetOptions
 
-| Prop                     | Type                                              | Description                                              |
-| ------------------------ | ------------------------------------------------- | -------------------------------------------------------- |
-| **`headerLogo`**         | <code>string</code>                               | Header logo - supports base64 data URL or HTTP/HTTPS URL |
-| **`title`**              | <code>string</code>                               | Sheet title                                              |
-| **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and rows       |
-| **`rows`**               | <code>SheetRow[]</code>                           | Description rows                                         |
-| **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
-| **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |
-| **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                              |
+| Prop                     | Type                                              | Description                                                                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`headerLogo`**         | <code>string</code>                               | Header logo. Supports: - PNG/JPEG/WebP/GIF as base64 data URL or HTTP/HTTPS URL - SVG as `data:image/svg+xml;base64,...`, `data:image/svg+xml,&lt;svg ...&gt;...` (URL-encoded or plain), or any HTTP/HTTPS URL ending in `.svg` |
+| **`title`**              | <code>string</code>                               | Sheet title                                                                                                                                                                                                                      |
+| **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and rows                                                                                                                                                                               |
+| **`rows`**               | <code>SheetRow[]</code>                           | Description rows                                                                                                                                                                                                                 |
+| **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                                                                                                                                                                                             |
+| **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                                                                                                                                                                                              |
+| **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                                                                                                                                                                                                      |
 
 
 #### SheetRow
 
-| Prop        | Type                | Description                                                     |
-| ----------- | ------------------- | --------------------------------------------------------------- |
-| **`title`** | <code>string</code> | Row title (required)                                            |
-| **`logo`**  | <code>string</code> | Optional logo/icon - supports base64 data URL or HTTP/HTTPS URL |
-| **`value`** | <code>string</code> | Optional value displayed on the right                           |
+| Prop        | Type                | Description                                                                                                                                                                                                                             |
+| ----------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`title`** | <code>string</code> | Row title (required)                                                                                                                                                                                                                    |
+| **`logo`**  | <code>string</code> | Optional logo/icon. Supports: - PNG/JPEG/WebP/GIF as base64 data URL or HTTP/HTTPS URL - SVG as `data:image/svg+xml;base64,...`, `data:image/svg+xml,&lt;svg ...&gt;...` (URL-encoded or plain), or any HTTP/HTTPS URL ending in `.svg` |
+| **`value`** | <code>string</code> | Optional value displayed on the right                                                                                                                                                                                                   |
 
 
 #### MessageSheetResult
@@ -278,15 +278,15 @@ Show a message sheet dialog with an optional header logo, title, and message.
 
 #### MessageSheetOptions
 
-| Prop                     | Type                                              | Description                                              |
-| ------------------------ | ------------------------------------------------- | -------------------------------------------------------- |
-| **`headerLogo`**         | <code>string</code>                               | Header logo - supports base64 data URL or HTTP/HTTPS URL |
-| **`title`**              | <code>string</code>                               | Sheet title                                              |
-| **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and message    |
-| **`message`**            | <code>string</code>                               | Message body displayed in the sheet                      |
-| **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                     |
-| **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                      |
-| **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                              |
+| Prop                     | Type                                              | Description                                                                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`headerLogo`**         | <code>string</code>                               | Header logo. Supports: - PNG/JPEG/WebP/GIF as base64 data URL or HTTP/HTTPS URL - SVG as `data:image/svg+xml;base64,...`, `data:image/svg+xml,&lt;svg ...&gt;...` (URL-encoded or plain), or any HTTP/HTTPS URL ending in `.svg` |
+| **`title`**              | <code>string</code>                               | Sheet title                                                                                                                                                                                                                      |
+| **`subtitle`**           | <code>string</code>                               | Optional subtitle displayed between title and message                                                                                                                                                                            |
+| **`message`**            | <code>string</code>                               | Message body displayed in the sheet                                                                                                                                                                                              |
+| **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                                                                                                                                                                                             |
+| **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                                                                                                                                                                                              |
+| **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                                                                                                                                                                                                      |
 
 
 ### Type Aliases

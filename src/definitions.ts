@@ -273,14 +273,22 @@ export interface MultiSelectResult {
 export interface SheetRow {
   /** Row title (required) */
   title: string;
-  /** Optional logo/icon - supports base64 data URL or HTTP/HTTPS URL */
+  /**
+   * Optional logo/icon. Supports:
+   * - PNG/JPEG/WebP/GIF as base64 data URL or HTTP/HTTPS URL
+   * - SVG as `data:image/svg+xml;base64,...`, `data:image/svg+xml,<svg ...>...` (URL-encoded or plain), or any HTTP/HTTPS URL ending in `.svg`
+   */
   logo?: string;
   /** Optional value displayed on the right */
   value?: string;
 }
 
 export interface SheetOptions extends DialogStyleOptions {
-  /** Header logo - supports base64 data URL or HTTP/HTTPS URL */
+  /**
+   * Header logo. Supports:
+   * - PNG/JPEG/WebP/GIF as base64 data URL or HTTP/HTTPS URL
+   * - SVG as `data:image/svg+xml;base64,...`, `data:image/svg+xml,<svg ...>...` (URL-encoded or plain), or any HTTP/HTTPS URL ending in `.svg`
+   */
   headerLogo?: string;
   /** Sheet title */
   title: string;
@@ -297,7 +305,11 @@ export interface SheetOptions extends DialogStyleOptions {
 }
 
 export interface MessageSheetOptions extends DialogStyleOptions {
-  /** Header logo - supports base64 data URL or HTTP/HTTPS URL */
+  /**
+   * Header logo. Supports:
+   * - PNG/JPEG/WebP/GIF as base64 data URL or HTTP/HTTPS URL
+   * - SVG as `data:image/svg+xml;base64,...`, `data:image/svg+xml,<svg ...>...` (URL-encoded or plain), or any HTTP/HTTPS URL ending in `.svg`
+   */
   headerLogo?: string;
   /** Sheet title */
   title: string;
