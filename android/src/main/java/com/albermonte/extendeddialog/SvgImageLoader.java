@@ -65,6 +65,17 @@ final class SvgImageLoader {
             if (height <= 0) height = fallback;
         }
 
+        // AndroidSVG only scales through the viewBox. Without one, resizing the
+        // document clips the drawing to its top-left corner, so derive it from
+        // the declared width/height.
+        if (svg.getDocumentViewBox() == null) {
+            float docWidth = svg.getDocumentWidth();
+            float docHeight = svg.getDocumentHeight();
+            if (docWidth > 0 && docHeight > 0) {
+                svg.setDocumentViewBox(0, 0, docWidth, docHeight);
+            }
+        }
+
         // Rescale via viewBox + preserveAspectRatio so small-viewport SVGs
         // (e.g. width="20") aren't rendered tiny in the top-left corner.
         svg.setDocumentWidth(width);
