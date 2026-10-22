@@ -114,6 +114,12 @@ export interface BaseDialogOptions extends DialogStyleOptions {
    * @default 'basic'
    */
   mode?: DialogMode;
+  /**
+   * Close the dialog after this many milliseconds. It settles with its cancel result.
+   * Only one dialog is shown at a time: showing another one closes this one the same way.
+   * Ignored by the web `alert`, `confirm` and `prompt` fallbacks, which block until answered.
+   */
+  timeout?: number;
 }
 
 export interface AlertOptions extends BaseDialogOptions {
@@ -302,6 +308,12 @@ export interface SheetOptions extends DialogStyleOptions {
   cancelButtonTitle?: string; // default: "Cancel"
   /** Dialog mode */
   mode?: DialogMode;
+  /**
+   * Close the dialog after this many milliseconds. It settles with its cancel result.
+   * Only one dialog is shown at a time: showing another one closes this one the same way.
+   * Ignored by the web `alert`, `confirm` and `prompt` fallbacks, which block until answered.
+   */
+  timeout?: number;
 }
 
 export interface MessageSheetOptions extends DialogStyleOptions {
@@ -323,6 +335,12 @@ export interface MessageSheetOptions extends DialogStyleOptions {
   cancelButtonTitle?: string; // default: "Cancel"
   /** Dialog mode */
   mode?: DialogMode;
+  /**
+   * Close the dialog after this many milliseconds. It settles with its cancel result.
+   * Only one dialog is shown at a time: showing another one closes this one the same way.
+   * Ignored by the web `alert`, `confirm` and `prompt` fallbacks, which block until answered.
+   */
+  timeout?: number;
 }
 
 export interface SheetResult {

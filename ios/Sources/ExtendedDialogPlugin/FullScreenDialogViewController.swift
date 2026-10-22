@@ -998,6 +998,14 @@ public class FullScreenDialogViewController: UIViewController {
         }
     }
 
+    // Swipe-down and programmatic dismissal skip the buttons; settle as cancelled.
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isBeingDismissed {
+            handleCancel()
+        }
+    }
+
     // MARK: - Actions
 
     @objc private func cancelTapped() {

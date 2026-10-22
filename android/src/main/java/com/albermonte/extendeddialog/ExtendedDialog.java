@@ -146,6 +146,16 @@ public class ExtendedDialog {
         }
     }
 
+    // Closes the last dialog shown. Programmatic dismissal skips the result callbacks.
+    private Runnable dismissCurrent;
+
+    public void dismissCurrent() {
+        if (dismissCurrent != null) {
+            dismissCurrent.run();
+            dismissCurrent = null;
+        }
+    }
+
     public interface AlertCallback {
         void onDismiss();
     }
@@ -210,6 +220,7 @@ public class ExtendedDialog {
 
             AlertDialog dialog = builder.create();
             dialog.show();
+            dismissCurrent = dialog::dismiss;
             applyDialogStyles(dialog, styleOptions);
         });
     }
@@ -237,6 +248,7 @@ public class ExtendedDialog {
             );
             fragment.setAlertCallback(callback);
             fragment.show(activity.getSupportFragmentManager(), "fullscreen_alert");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 
@@ -285,6 +297,7 @@ public class ExtendedDialog {
 
             AlertDialog dialog = builder.create();
             dialog.show();
+            dismissCurrent = dialog::dismiss;
             applyDialogStyles(dialog, styleOptions);
         });
     }
@@ -313,6 +326,7 @@ public class ExtendedDialog {
             );
             fragment.setConfirmCallback(callback);
             fragment.show(activity.getSupportFragmentManager(), "fullscreen_confirm");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 
@@ -420,6 +434,7 @@ public class ExtendedDialog {
                 dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
             }
             dialog.show();
+            dismissCurrent = dialog::dismiss;
             applyDialogStyles(dialog, styleOptions);
         });
     }
@@ -451,6 +466,7 @@ public class ExtendedDialog {
             );
             fragment.setPromptCallback(callback);
             fragment.show(activity.getSupportFragmentManager(), "fullscreen_prompt");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 
@@ -552,6 +568,7 @@ public class ExtendedDialog {
 
                 AlertDialog dialog = builder.create();
                 dialog.show();
+                dismissCurrent = dialog::dismiss;
                 applyDialogStyles(dialog, styleOptions);
 
                 // M3 guideline: Disable confirming action until a choice is made
@@ -590,6 +607,7 @@ public class ExtendedDialog {
             );
             fragment.setSingleSelectCallback(callback);
             fragment.show(activity.getSupportFragmentManager(), "fullscreen_single_select");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 
@@ -697,6 +715,7 @@ public class ExtendedDialog {
 
                 AlertDialog dialog = builder.create();
                 dialog.show();
+                dismissCurrent = dialog::dismiss;
                 applyDialogStyles(dialog, styleOptions);
 
                 // M3 guideline: Disable confirming action until a choice is made
@@ -736,6 +755,7 @@ public class ExtendedDialog {
             );
             fragment.setMultiSelectCallback(callback);
             fragment.show(activity.getSupportFragmentManager(), "fullscreen_multi_select");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 
@@ -771,6 +791,7 @@ public class ExtendedDialog {
             );
             fragment.setSheetCallback(callback);
             fragment.show(fragmentActivity.getSupportFragmentManager(), "bottom_sheet");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 
@@ -804,6 +825,7 @@ public class ExtendedDialog {
             );
             fragment.setSheetCallback(callback);
             fragment.show(fragmentActivity.getSupportFragmentManager(), "message_sheet");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
 }

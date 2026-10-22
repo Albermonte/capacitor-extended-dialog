@@ -17,6 +17,54 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private let implementation = ExtendedDialog()
 
+    // One dialog at a time: a new dialog or an elapsed `timeout` closes the open
+    // one, which settles with its cancel result. Only touched on the main thread.
+    private var activeCall: CAPPluginCall?
+    private var activeCancelResult: [String: Any] = [:]
+
+    private func presentDialog(_ call: CAPPluginCall, cancelResult: [String: Any], show: @escaping (@escaping ([String: Any]) -> Void) -> Void) {
+        DispatchQueue.main.async {
+            self.dismissActive {
+                let callbackId = call.callbackId!
+                self.activeCall = call
+                self.activeCancelResult = cancelResult
+                if let timeout = call.getDouble("timeout"), timeout > 0 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + timeout / 1000) {
+                        if self.activeCall?.callbackId == callbackId {
+                            self.dismissActive {}
+                        }
+                    }
+                }
+                show { result in self.settle(callbackId, result) }
+            }
+        }
+    }
+
+    private func settle(_ callbackId: String, _ result: [String: Any]) {
+        guard let call = activeCall, call.callbackId == callbackId else { return }
+        activeCall = nil
+        call.resolve(result)
+    }
+
+    private func dismissActive(then next: @escaping () -> Void) {
+        if let call = activeCall {
+            settle(call.callbackId, activeCancelResult)
+        }
+        closePresentedDialog(then: next)
+    }
+
+    private func closePresentedDialog(then next: @escaping () -> Void) {
+        guard let dialog = implementation.presentedDialog, dialog.presentingViewController != nil else {
+            return next()
+        }
+        // UIKit drops presentations and dismissals started mid-transition, so wait for it.
+        if dialog.isBeingPresented || dialog.isBeingDismissed,
+           dialog.transitionCoordinator?.animate(alongsideTransition: nil, completion: { _ in self.closePresentedDialog(then: next) }) == true {
+            return
+        }
+        dialog.dismiss(animated: true, completion: next)
+    }
+
     private func extractStyleOptions(_ call: CAPPluginCall) -> DialogStyleOptions {
         return DialogStyleOptions(
             buttonColor: call.getString("buttonColor"),
@@ -43,14 +91,16 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let fullscreen = mode == "fullscreen"
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showAlert(
-            title: title,
-            message: message,
-            buttonTitle: buttonTitle,
-            fullscreen: fullscreen,
-            styleOptions: styleOptions
-        ) {
-            call.resolve()
+        presentDialog(call, cancelResult: [:]) { done in
+            self.implementation.showAlert(
+                title: title,
+                message: message,
+                buttonTitle: buttonTitle,
+                fullscreen: fullscreen,
+                styleOptions: styleOptions
+            ) {
+                done([:])
+            }
         }
     }
 
@@ -66,15 +116,17 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let fullscreen = mode == "fullscreen"
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showConfirm(
-            title: title,
-            message: message,
-            okButtonTitle: okButtonTitle,
-            cancelButtonTitle: cancelButtonTitle,
-            fullscreen: fullscreen,
-            styleOptions: styleOptions
-        ) { value in
-            call.resolve(["value": value])
+        presentDialog(call, cancelResult: ["value": false]) { done in
+            self.implementation.showConfirm(
+                title: title,
+                message: message,
+                okButtonTitle: okButtonTitle,
+                cancelButtonTitle: cancelButtonTitle,
+                fullscreen: fullscreen,
+                styleOptions: styleOptions
+            ) { value in
+                done(["value": value])
+            }
         }
     }
 
@@ -93,21 +145,23 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let focusInput = call.getBool("focusInput") ?? false
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showPrompt(
-            title: title,
-            message: message,
-            okButtonTitle: okButtonTitle,
-            cancelButtonTitle: cancelButtonTitle,
-            inputPlaceholder: inputPlaceholder,
-            inputText: inputText,
-            fullscreen: fullscreen,
-            focusInput: focusInput,
-            styleOptions: styleOptions
-        ) { value, cancelled in
-            call.resolve([
-                "value": value,
-                "cancelled": cancelled
-            ])
+        presentDialog(call, cancelResult: ["value": "", "cancelled": true]) { done in
+            self.implementation.showPrompt(
+                title: title,
+                message: message,
+                okButtonTitle: okButtonTitle,
+                cancelButtonTitle: cancelButtonTitle,
+                inputPlaceholder: inputPlaceholder,
+                inputText: inputText,
+                fullscreen: fullscreen,
+                focusInput: focusInput,
+                styleOptions: styleOptions
+            ) { value, cancelled in
+                done([
+                    "value": value,
+                    "cancelled": cancelled
+                ])
+            }
         }
     }
 
@@ -128,20 +182,22 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let fullscreen = mode == "fullscreen"
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showSingleSelect(
-            title: title,
-            message: message,
-            options: optionsArray,
-            selectedValue: selectedValue,
-            okButtonTitle: okButtonTitle,
-            cancelButtonTitle: cancelButtonTitle,
-            fullscreen: fullscreen,
-            styleOptions: styleOptions
-        ) { value, cancelled in
-            call.resolve([
-                "value": value as Any,
-                "cancelled": cancelled
-            ])
+        presentDialog(call, cancelResult: ["value": NSNull(), "cancelled": true]) { done in
+            self.implementation.showSingleSelect(
+                title: title,
+                message: message,
+                options: optionsArray,
+                selectedValue: selectedValue,
+                okButtonTitle: okButtonTitle,
+                cancelButtonTitle: cancelButtonTitle,
+                fullscreen: fullscreen,
+                styleOptions: styleOptions
+            ) { value, cancelled in
+                done([
+                    "value": value as Any,
+                    "cancelled": cancelled
+                ])
+            }
         }
     }
 
@@ -162,20 +218,22 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let fullscreen = mode == "fullscreen"
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showMultiSelect(
-            title: title,
-            message: message,
-            options: optionsArray,
-            selectedValues: selectedValues,
-            okButtonTitle: okButtonTitle,
-            cancelButtonTitle: cancelButtonTitle,
-            fullscreen: fullscreen,
-            styleOptions: styleOptions
-        ) { values, cancelled in
-            call.resolve([
-                "values": values,
-                "cancelled": cancelled
-            ])
+        presentDialog(call, cancelResult: ["values": [String](), "cancelled": true]) { done in
+            self.implementation.showMultiSelect(
+                title: title,
+                message: message,
+                options: optionsArray,
+                selectedValues: selectedValues,
+                okButtonTitle: okButtonTitle,
+                cancelButtonTitle: cancelButtonTitle,
+                fullscreen: fullscreen,
+                styleOptions: styleOptions
+            ) { values, cancelled in
+                done([
+                    "values": values,
+                    "cancelled": cancelled
+                ])
+            }
         }
     }
 
@@ -196,17 +254,19 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let fullscreen = mode == "fullscreen"
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showSheet(
-            title: title,
-            subtitle: subtitle,
-            headerLogo: headerLogo,
-            rows: rowsArray,
-            confirmButtonTitle: confirmButtonTitle,
-            cancelButtonTitle: cancelButtonTitle,
-            fullscreen: fullscreen,
-            styleOptions: styleOptions
-        ) { confirmed in
-            call.resolve(["confirmed": confirmed])
+        presentDialog(call, cancelResult: ["confirmed": false]) { done in
+            self.implementation.showSheet(
+                title: title,
+                subtitle: subtitle,
+                headerLogo: headerLogo,
+                rows: rowsArray,
+                confirmButtonTitle: confirmButtonTitle,
+                cancelButtonTitle: cancelButtonTitle,
+                fullscreen: fullscreen,
+                styleOptions: styleOptions
+            ) { confirmed in
+                done(["confirmed": confirmed])
+            }
         }
     }
 
@@ -227,17 +287,19 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         let fullscreen = mode == "fullscreen"
         let styleOptions = extractStyleOptions(call)
 
-        implementation.showMessageSheet(
-            title: title,
-            subtitle: subtitle,
-            message: message,
-            headerLogo: headerLogo,
-            confirmButtonTitle: confirmButtonTitle,
-            cancelButtonTitle: cancelButtonTitle,
-            fullscreen: fullscreen,
-            styleOptions: styleOptions
-        ) { confirmed in
-            call.resolve(["confirmed": confirmed])
+        presentDialog(call, cancelResult: ["confirmed": false]) { done in
+            self.implementation.showMessageSheet(
+                title: title,
+                subtitle: subtitle,
+                message: message,
+                headerLogo: headerLogo,
+                confirmButtonTitle: confirmButtonTitle,
+                cancelButtonTitle: cancelButtonTitle,
+                fullscreen: fullscreen,
+                styleOptions: styleOptions
+            ) { confirmed in
+                done(["confirmed": confirmed])
+            }
         }
     }
 }
