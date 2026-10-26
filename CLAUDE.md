@@ -16,6 +16,8 @@ npm run docgen         # Regenerate API docs in README.md
 
 ## Architecture
 
+- iOS replacements must share one pending dismissal. Competing UIKit completions can overwrite `activeCall` and leave callers unresolved. Cancel superseded pending requests before presenting the newest one.
+
 This is a Capacitor 6 plugin providing native dialogs with Material 3 (Android) and Liquid Glass (iOS) styling.
 
 ### TypeScript Layer (`src/`)

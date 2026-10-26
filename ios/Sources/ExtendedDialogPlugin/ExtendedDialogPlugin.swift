@@ -21,21 +21,36 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
     // one, which settles with its cancel result. Only touched on the main thread.
     private var activeCall: CAPPluginCall?
     private var activeCancelResult: [String: Any] = [:]
+    private var pendingDialog: (present: () -> Void, cancel: () -> Void)?
+    private var isDismissing = false
 
-    private func presentDialog(_ call: CAPPluginCall, cancelResult: [String: Any], show: @escaping (@escaping ([String: Any]) -> Void) -> Void) {
+    func presentDialog(_ call: CAPPluginCall, cancelResult: [String: Any], show: @escaping (@escaping ([String: Any]) -> Void) -> Void) {
         DispatchQueue.main.async {
-            self.dismissActive {
-                let callbackId = call.callbackId!
-                self.activeCall = call
-                self.activeCancelResult = cancelResult
-                if let timeout = call.getDouble("timeout"), timeout > 0 {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + timeout / 1000) {
-                        if self.activeCall?.callbackId == callbackId {
-                            self.dismissActive {}
+            self.pendingDialog?.cancel()
+            self.pendingDialog = (
+                present: {
+                    let callbackId = call.callbackId!
+                    self.activeCall = call
+                    self.activeCancelResult = cancelResult
+                    if let timeout = call.getDouble("timeout"), timeout > 0 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + timeout / 1000) {
+                            if self.activeCall?.callbackId == callbackId {
+                                self.dismissActive {}
+                            }
                         }
                     }
-                }
-                show { result in self.settle(callbackId, result) }
+                    show { result in self.settle(callbackId, result) }
+                },
+                cancel: { call.resolve(cancelResult) }
+            )
+            // Competing dismissal completions can otherwise overwrite an unresolved call.
+            guard !self.isDismissing else { return }
+            self.isDismissing = true
+            self.dismissActive {
+                self.isDismissing = false
+                let pending = self.pendingDialog
+                self.pendingDialog = nil
+                pending?.present()
             }
         }
     }
@@ -53,7 +68,7 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         closePresentedDialog(then: next)
     }
 
-    private func closePresentedDialog(then next: @escaping () -> Void) {
+    func closePresentedDialog(then next: @escaping () -> Void) {
         guard let dialog = implementation.presentedDialog, dialog.presentingViewController != nil else {
             return next()
         }
