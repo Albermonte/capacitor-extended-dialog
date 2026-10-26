@@ -21,11 +21,13 @@ import type {
 export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin {
   async alert(options: AlertOptions): Promise<void> {
     const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
+    this.closeActive?.();
     window.alert(message);
   }
 
   async confirm(options: ConfirmOptions): Promise<ConfirmResult> {
     const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
+    this.closeActive?.();
     const result = window.confirm(message);
     return { value: result };
   }
@@ -34,6 +36,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
     // Note: focusInput option is ignored on web as window.prompt() handles focus automatically
     // and does not provide programmatic control over keyboard/focus behavior
     const message = options.title ? `${options.title}\n\n${options.message}` : options.message;
+    this.closeActive?.();
     const result = window.prompt(message, options.inputText ?? '');
     return {
       value: result ?? '',
@@ -44,6 +47,12 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
   async singleSelect(options: SingleSelectOptions): Promise<SingleSelectResult> {
     return new Promise((resolve) => {
       const overlay = this.createOverlay();
+      const settle = this.track<SingleSelectResult>(
+        overlay,
+        { value: null, cancelled: true },
+        options.timeout,
+        resolve,
+      );
       const dialog = this.createDialogContainer(options.title, options.message, options);
 
       const optionsContainer = document.createElement('div');
@@ -83,8 +92,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.cancelButtonTitle ?? 'Cancel',
         false,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ value: null, cancelled: true });
+          settle({ value: null, cancelled: true });
         },
         options,
       );
@@ -93,8 +101,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.okButtonTitle ?? 'OK',
         true,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ value: selectedValue, cancelled: false });
+          settle({ value: selectedValue, cancelled: false });
         },
         options,
       );
@@ -110,6 +117,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
   async multiSelect(options: MultiSelectOptions): Promise<MultiSelectResult> {
     return new Promise((resolve) => {
       const overlay = this.createOverlay();
+      const settle = this.track<MultiSelectResult>(overlay, { values: [], cancelled: true }, options.timeout, resolve);
       const dialog = this.createDialogContainer(options.title, options.message, options);
 
       const optionsContainer = document.createElement('div');
@@ -152,8 +160,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.cancelButtonTitle ?? 'Cancel',
         false,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ values: [], cancelled: true });
+          settle({ values: [], cancelled: true });
         },
         options,
       );
@@ -162,8 +169,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.okButtonTitle ?? 'OK',
         true,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ values: Array.from(selectedValues), cancelled: false });
+          settle({ values: Array.from(selectedValues), cancelled: false });
         },
         options,
       );
@@ -259,6 +265,30 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
     return button;
   }
 
+  // One dialog at a time: a new dialog or an elapsed `timeout` closes the open one with its cancel result.
+  private closeActive?: () => void;
+
+  private track<T>(
+    overlay: HTMLDivElement,
+    cancelResult: T,
+    timeout: number | undefined,
+    resolve: (result: T) => void,
+  ): (result: T) => void {
+    this.closeActive?.();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const close = (): void => settle(cancelResult);
+    const settle = (result: T): void => {
+      if (this.closeActive !== close) return;
+      this.closeActive = undefined;
+      clearTimeout(timer);
+      this.removeOverlay(overlay);
+      resolve(result);
+    };
+    this.closeActive = close;
+    if ((timeout ?? 0) > 0) timer = setTimeout(close, timeout);
+    return settle;
+  }
+
   private removeOverlay(overlay: HTMLDivElement): void {
     overlay.remove();
   }
@@ -266,6 +296,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
   async sheet(options: SheetOptions): Promise<SheetResult> {
     return new Promise((resolve) => {
       const overlay = this.createOverlay();
+      const settle = this.track<SheetResult>(overlay, { confirmed: false }, options.timeout, resolve);
       const dialog = this.createSheetDialogContainer(options);
 
       // Header section with logo and title
@@ -370,8 +401,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.cancelButtonTitle ?? 'Cancel',
         false,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ confirmed: false });
+          settle({ confirmed: false });
         },
         options,
       );
@@ -380,8 +410,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.confirmButtonTitle ?? 'Confirm',
         true,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ confirmed: true });
+          settle({ confirmed: true });
         },
         options,
       );
@@ -397,6 +426,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
   async messageSheet(options: MessageSheetOptions): Promise<MessageSheetResult> {
     return new Promise((resolve) => {
       const overlay = this.createOverlay();
+      const settle = this.track<MessageSheetResult>(overlay, { confirmed: false }, options.timeout, resolve);
       const dialog = this.createMessageSheetDialogContainer(options);
 
       const content = document.createElement('div');
@@ -459,8 +489,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.confirmButtonTitle ?? 'Confirm',
         true,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ confirmed: true });
+          settle({ confirmed: true });
         },
         options,
       );
@@ -469,8 +498,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
         options.cancelButtonTitle ?? 'Cancel',
         false,
         () => {
-          this.removeOverlay(overlay);
-          resolve({ confirmed: false });
+          settle({ confirmed: false });
         },
         options,
       );

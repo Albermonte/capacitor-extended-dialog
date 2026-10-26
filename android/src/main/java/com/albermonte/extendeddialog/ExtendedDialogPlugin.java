@@ -1,5 +1,7 @@
 package com.albermonte.extendeddialog;
 
+import android.os.Handler;
+import android.os.Looper;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -14,6 +16,55 @@ import org.json.JSONObject;
 public class ExtendedDialogPlugin extends Plugin {
 
     private final ExtendedDialog implementation = new ExtendedDialog();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    // One dialog at a time: a new dialog or an elapsed `timeout` closes the open
+    // one, which settles with its cancel result. Only touched on the UI thread.
+    private PluginCall activeCall;
+    private JSObject activeCancelResult;
+
+    private interface Done {
+        void resolve(JSObject result);
+    }
+
+    private interface Show {
+        void show(Done done);
+    }
+
+    private void presentDialog(PluginCall call, JSObject cancelResult, Show show) {
+        getActivity().runOnUiThread(() -> {
+            dismissActive();
+            String callbackId = call.getCallbackId();
+            activeCall = call;
+            activeCancelResult = cancelResult;
+            Double timeout = call.getDouble("timeout");
+            if (timeout != null && timeout > 0) {
+                mainHandler.postDelayed(
+                    () -> {
+                        if (activeCall != null && callbackId.equals(activeCall.getCallbackId())) {
+                            dismissActive();
+                        }
+                    },
+                    timeout.longValue()
+                );
+            }
+            show.show((result) -> settle(callbackId, result));
+        });
+    }
+
+    private void settle(String callbackId, JSObject result) {
+        if (activeCall == null || !callbackId.equals(activeCall.getCallbackId())) return;
+        PluginCall call = activeCall;
+        activeCall = null;
+        call.resolve(result);
+    }
+
+    private void dismissActive() {
+        if (activeCall != null) {
+            settle(activeCall.getCallbackId(), activeCancelResult);
+        }
+        implementation.dismissCurrent();
+    }
 
     private DialogStyleOptions extractStyleOptions(PluginCall call) {
         DialogStyleOptions styleOptions = new DialogStyleOptions();
@@ -44,7 +95,11 @@ public class ExtendedDialogPlugin extends Plugin {
             return;
         }
 
-        implementation.showAlert(getActivity(), title, message, buttonTitle, fullscreen, styleOptions, () -> call.resolve());
+        presentDialog(call, new JSObject(), (done) ->
+            implementation.showAlert(getActivity(), title, message, buttonTitle, fullscreen, styleOptions, () ->
+                done.resolve(new JSObject())
+            )
+        );
     }
 
     @PluginMethod
@@ -62,11 +117,22 @@ public class ExtendedDialogPlugin extends Plugin {
             return;
         }
 
-        implementation.showConfirm(getActivity(), title, message, okButtonTitle, cancelButtonTitle, fullscreen, styleOptions, (value) -> {
-            JSObject result = new JSObject();
-            result.put("value", value);
-            call.resolve(result);
-        });
+        presentDialog(call, new JSObject().put("value", false), (done) ->
+            implementation.showConfirm(
+                getActivity(),
+                title,
+                message,
+                okButtonTitle,
+                cancelButtonTitle,
+                fullscreen,
+                styleOptions,
+                (value) -> {
+                    JSObject result = new JSObject();
+                    result.put("value", value);
+                    done.resolve(result);
+                }
+            )
+        );
     }
 
     @PluginMethod
@@ -87,23 +153,25 @@ public class ExtendedDialogPlugin extends Plugin {
             return;
         }
 
-        implementation.showPrompt(
-            getActivity(),
-            title,
-            message,
-            okButtonTitle,
-            cancelButtonTitle,
-            inputPlaceholder,
-            inputText,
-            fullscreen,
-            focusInput,
-            styleOptions,
-            (value, cancelled) -> {
-                JSObject result = new JSObject();
-                result.put("value", value != null ? value : "");
-                result.put("cancelled", cancelled);
-                call.resolve(result);
-            }
+        presentDialog(call, new JSObject().put("value", "").put("cancelled", true), (done) ->
+            implementation.showPrompt(
+                getActivity(),
+                title,
+                message,
+                okButtonTitle,
+                cancelButtonTitle,
+                inputPlaceholder,
+                inputText,
+                fullscreen,
+                focusInput,
+                styleOptions,
+                (value, cancelled) -> {
+                    JSObject result = new JSObject();
+                    result.put("value", value != null ? value : "");
+                    result.put("cancelled", cancelled);
+                    done.resolve(result);
+                }
+            )
         );
     }
 
@@ -132,22 +200,24 @@ public class ExtendedDialogPlugin extends Plugin {
         try {
             JSONArray options = new JSONArray(optionsArray.toString());
 
-            implementation.showSingleSelect(
-                getActivity(),
-                title,
-                message,
-                options,
-                selectedValue,
-                okButtonTitle,
-                cancelButtonTitle,
-                fullscreen,
-                styleOptions,
-                (value, cancelled) -> {
-                    JSObject result = new JSObject();
-                    result.put("value", value);
-                    result.put("cancelled", cancelled);
-                    call.resolve(result);
-                }
+            presentDialog(call, new JSObject().put("value", (String) null).put("cancelled", true), (done) ->
+                implementation.showSingleSelect(
+                    getActivity(),
+                    title,
+                    message,
+                    options,
+                    selectedValue,
+                    okButtonTitle,
+                    cancelButtonTitle,
+                    fullscreen,
+                    styleOptions,
+                    (value, cancelled) -> {
+                        JSObject result = new JSObject();
+                        result.put("value", value);
+                        result.put("cancelled", cancelled);
+                        done.resolve(result);
+                    }
+                )
             );
         } catch (JSONException e) {
             call.reject("Invalid options format");
@@ -180,28 +250,30 @@ public class ExtendedDialogPlugin extends Plugin {
             JSONArray options = new JSONArray(optionsArray.toString());
             JSONArray selectedValues = selectedValuesArray != null ? new JSONArray(selectedValuesArray.toString()) : null;
 
-            implementation.showMultiSelect(
-                getActivity(),
-                title,
-                message,
-                options,
-                selectedValues,
-                okButtonTitle,
-                cancelButtonTitle,
-                fullscreen,
-                styleOptions,
-                (values, cancelled) -> {
-                    JSObject result = new JSObject();
-                    JSArray valuesResult = new JSArray();
-                    if (values != null) {
-                        for (String value : values) {
-                            valuesResult.put(value);
+            presentDialog(call, new JSObject().put("values", new JSArray()).put("cancelled", true), (done) ->
+                implementation.showMultiSelect(
+                    getActivity(),
+                    title,
+                    message,
+                    options,
+                    selectedValues,
+                    okButtonTitle,
+                    cancelButtonTitle,
+                    fullscreen,
+                    styleOptions,
+                    (values, cancelled) -> {
+                        JSObject result = new JSObject();
+                        JSArray valuesResult = new JSArray();
+                        if (values != null) {
+                            for (String value : values) {
+                                valuesResult.put(value);
+                            }
                         }
+                        result.put("values", valuesResult);
+                        result.put("cancelled", cancelled);
+                        done.resolve(result);
                     }
-                    result.put("values", valuesResult);
-                    result.put("cancelled", cancelled);
-                    call.resolve(result);
-                }
+                )
             );
         } catch (JSONException e) {
             call.reject("Invalid options format");
@@ -233,21 +305,23 @@ public class ExtendedDialogPlugin extends Plugin {
         try {
             JSONArray rows = new JSONArray(rowsArray.toString());
 
-            implementation.showSheet(
-                getActivity(),
-                title,
-                subtitle,
-                headerLogo,
-                rows,
-                confirmButtonTitle,
-                cancelButtonTitle,
-                fullscreen,
-                styleOptions,
-                (confirmed) -> {
-                    JSObject result = new JSObject();
-                    result.put("confirmed", confirmed);
-                    call.resolve(result);
-                }
+            presentDialog(call, new JSObject().put("confirmed", false), (done) ->
+                implementation.showSheet(
+                    getActivity(),
+                    title,
+                    subtitle,
+                    headerLogo,
+                    rows,
+                    confirmButtonTitle,
+                    cancelButtonTitle,
+                    fullscreen,
+                    styleOptions,
+                    (confirmed) -> {
+                        JSObject result = new JSObject();
+                        result.put("confirmed", confirmed);
+                        done.resolve(result);
+                    }
+                )
             );
         } catch (JSONException e) {
             call.reject("Invalid rows format");
@@ -276,21 +350,23 @@ public class ExtendedDialogPlugin extends Plugin {
             return;
         }
 
-        implementation.showMessageSheet(
-            getActivity(),
-            title,
-            subtitle,
-            message,
-            headerLogo,
-            confirmButtonTitle,
-            cancelButtonTitle,
-            fullscreen,
-            styleOptions,
-            (confirmed) -> {
-                JSObject result = new JSObject();
-                result.put("confirmed", confirmed);
-                call.resolve(result);
-            }
+        presentDialog(call, new JSObject().put("confirmed", false), (done) ->
+            implementation.showMessageSheet(
+                getActivity(),
+                title,
+                subtitle,
+                message,
+                headerLogo,
+                confirmButtonTitle,
+                cancelButtonTitle,
+                fullscreen,
+                styleOptions,
+                (confirmed) -> {
+                    JSObject result = new JSObject();
+                    result.put("confirmed", confirmed);
+                    done.resolve(result);
+                }
+            )
         );
     }
 }

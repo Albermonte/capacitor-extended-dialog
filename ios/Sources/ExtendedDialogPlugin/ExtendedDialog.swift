@@ -102,7 +102,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping AlertCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             if fullscreen {
                 self.showFullScreenAlert(title: title, message: message, buttonTitle: buttonTitle, styleOptions: styleOptions, callback: callback)
             } else {
@@ -156,7 +156,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping ConfirmCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             if fullscreen {
                 self.showFullScreenConfirm(title: title, message: message, okButtonTitle: okButtonTitle, cancelButtonTitle: cancelButtonTitle, styleOptions: styleOptions, callback: callback)
             } else {
@@ -222,7 +222,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping PromptCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             if fullscreen {
                 self.showFullScreenPrompt(title: title, message: message, okButtonTitle: okButtonTitle, cancelButtonTitle: cancelButtonTitle, inputPlaceholder: inputPlaceholder, inputText: inputText, focusInput: focusInput, styleOptions: styleOptions, callback: callback)
             } else {
@@ -294,7 +294,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping SingleSelectCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             let selectOptions = options.compactMap { dict -> SelectOption? in
                 guard let label = dict["label"], let value = dict["value"] else { return nil }
                 return SelectOption(label: label, value: value)
@@ -368,7 +368,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping MultiSelectCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             let selectOptions = options.compactMap { dict -> SelectOption? in
                 guard let label = dict["label"], let value = dict["value"] else { return nil }
                 return SelectOption(label: label, value: value)
@@ -431,7 +431,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping SheetCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             let sheetRows = rows.compactMap { dict -> SheetRow? in
                 guard let rowTitle = dict["title"] else { return nil }
                 return SheetRow(title: rowTitle, logo: dict["logo"], value: dict["value"])
@@ -456,7 +456,7 @@ public struct DialogStyleOptions {
         styleOptions: DialogStyleOptions? = nil,
         callback: @escaping SheetCallback
     ) {
-        DispatchQueue.main.async {
+        onMain {
             let vc = FullScreenDialogViewController(
                 dialogType: .messageSheet,
                 dialogTitle: title,
@@ -527,6 +527,19 @@ public struct DialogStyleOptions {
 
     // MARK: - Helpers
 
+    /// Last dialog this instance presented, so the plugin can close it.
+    public private(set) weak var presentedDialog: UIViewController?
+
+    // Present synchronously when already on main, so `presentedDialog` is set
+    // before the plugin handles the next dialog.
+    private func onMain(_ block: @escaping () -> Void) {
+        if Thread.isMainThread {
+            block()
+        } else {
+            DispatchQueue.main.async(execute: block)
+        }
+    }
+
     private func applyLiquidGlassStyle(to alert: UIAlertController) {
         // Apply Liquid Glass styling for iOS 26+
         if #available(iOS 26, *) {
@@ -574,6 +587,7 @@ public struct DialogStyleOptions {
             popover.permittedArrowDirections = []
         }
 
+        presentedDialog = alert
         viewController.present(alert, animated: true)
     }
 
@@ -582,6 +596,7 @@ public struct DialogStyleOptions {
 
         viewController.modalPresentationStyle = .fullScreen
         viewController.modalTransitionStyle = .coverVertical
+        presentedDialog = viewController
         topVC.present(viewController, animated: true)
     }
 
@@ -618,6 +633,7 @@ public struct DialogStyleOptions {
             }
         }
 
+        presentedDialog = viewController
         topVC.present(viewController, animated: true)
     }
 

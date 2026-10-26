@@ -258,6 +258,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                                                                                                                                                                                             |
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                                                                                                                                                                                              |
 | **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                                                                                                                                                                                                      |
+| **`timeout`**            | <code>number</code>                               | Close the dialog after this many milliseconds. It settles with its cancel result. Only one dialog is shown at a time: showing another one closes this one the same way. Ignored by the web `alert`, `confirm` and `prompt` fallbacks, which block until answered. |
 
 
 #### SheetRow
@@ -287,6 +288,7 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`confirmButtonTitle`** | <code>string</code>                               | Confirm button title                                                                                                                                                                                                             |
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                                                                                                                                                                                              |
 | **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                                                                                                                                                                                                      |
+| **`timeout`**            | <code>number</code>                               | Close the dialog after this many milliseconds. It settles with its cancel result. Only one dialog is shown at a time: showing another one closes this one the same way. Ignored by the web `alert`, `confirm` and `prompt` fallbacks, which block until answered. |
 
 
 ### Type Aliases
