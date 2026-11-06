@@ -47,3 +47,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 }
+
+// UIKit traps apps built with the iOS 27 SDK that do not adopt UIScene.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+}

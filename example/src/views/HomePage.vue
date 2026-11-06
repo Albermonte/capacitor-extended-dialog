@@ -177,6 +177,12 @@
         <ion-label>Sheet Dialogs</ion-label>
       </ion-list-header>
       <ion-list inset>
+        <ion-item button @click="showSheetDuringPresentation()">
+          <ion-label>
+            <h2>Sheet During Presentation</h2>
+            <p>Opens a sheet while another view controller is still animating in</p>
+          </ion-label>
+        </ion-item>
         <ion-item button @click="showSheet('basic')">
           <ion-label>
             <h2>Basic Sheet</h2>
@@ -348,6 +354,7 @@ import {
   IonCardTitle,
   IonCardContent
 } from '@ionic/vue';
+import { Browser } from '@capacitor/browser';
 import { ExtendedDialog } from 'capacitor-extended-dialog';
 import type { DialogMode } from 'capacitor-extended-dialog';
 
@@ -561,6 +568,24 @@ async function showMultiSelectPreselected() {
 }
 
 // Bug Fix Test handlers
+async function showSheetDuringPresentation() {
+  const start = Date.now();
+  // Browser.open() starts an animated presentation; the sheet is requested before it finishes.
+  void Browser.open({ url: 'https://example.com' });
+  const result = await ExtendedDialog.sheet({
+    title: 'Sheet During Presentation',
+    rows: [{ title: 'Expected', value: 'Visible above the browser' }],
+    confirmButtonTitle: 'Confirm',
+    cancelButtonTitle: 'Cancel',
+    timeout: 10000,
+  });
+  lastResult.value = {
+    type: 'sheetDuringPresentation',
+    confirmed: result.confirmed,
+    settledAfterMs: Date.now() - start,
+  };
+}
+
 async function showDarkModeButtonSheet(mode: DialogMode) {
   const result = await ExtendedDialog.sheet({
     title: 'Dark Mode Test',
