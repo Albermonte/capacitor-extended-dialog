@@ -15,6 +15,8 @@ import type {
   SheetResult,
   MessageSheetOptions,
   MessageSheetResult,
+  LoadingOptions,
+  LoadingResult,
   DialogStyleOptions,
 } from './definitions';
 
@@ -267,6 +269,7 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
 
   // One dialog at a time: a new dialog or an elapsed `timeout` closes the open one with its cancel result.
   private closeActive?: () => void;
+  private closeLoading?: () => void;
 
   private track<T>(
     overlay: HTMLDivElement,
@@ -510,6 +513,46 @@ export class ExtendedDialogWeb extends WebPlugin implements ExtendedDialogPlugin
       overlay.appendChild(dialog);
       document.body.appendChild(overlay);
     });
+  }
+
+  async showLoading(options: LoadingOptions): Promise<LoadingResult> {
+    return new Promise((resolve) => {
+      const overlay = this.createOverlay();
+      const settle = this.track<LoadingResult>(overlay, { cancelled: false }, undefined, resolve);
+      this.closeLoading = this.closeActive;
+      const dialog = this.createDialogContainer(options.title, undefined, options);
+      dialog.style.textAlign = 'center';
+
+      const spinner = document.createElement('div');
+      const color = options.buttonColor ?? '#6750A4';
+      spinner.style.cssText = `width: 32px; height: 32px; margin: 16px auto; border-radius: 50%; border: 3px solid ${color}; border-top-color: transparent;`;
+      spinner.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], {
+        duration: 900,
+        iterations: Infinity,
+      });
+      dialog.appendChild(spinner);
+
+      const messageEl = document.createElement('p');
+      messageEl.textContent = options.message;
+      messageEl.style.cssText = `margin: 0; font-size: ${options.messageFontSize ?? 14}px; color: ${options.messageColor ?? '#666'};`;
+      dialog.appendChild(messageEl);
+
+      if (options.cancelButtonTitle) {
+        const buttonContainer = this.createButtonContainer(options.contentButtonSpacing);
+        buttonContainer.style.justifyContent = 'center';
+        buttonContainer.appendChild(
+          this.createButton(options.cancelButtonTitle, false, () => settle({ cancelled: true }), options),
+        );
+        dialog.appendChild(buttonContainer);
+      }
+
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+    });
+  }
+
+  async dismissLoading(): Promise<void> {
+    if (this.closeLoading && this.closeLoading === this.closeActive) this.closeActive();
   }
 
   private createSheetDialogContainer(options: SheetOptions): HTMLDivElement {

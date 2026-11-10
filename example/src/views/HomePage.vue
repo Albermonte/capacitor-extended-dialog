@@ -263,6 +263,43 @@
         </ion-item>
       </ion-list>
 
+      <!-- Loading Section -->
+      <ion-list-header>
+        <ion-label>Loading Sheet</ion-label>
+      </ion-list-header>
+      <ion-list inset>
+        <ion-item button @click="showLoading()">
+          <ion-label>
+            <h2>Loading</h2>
+            <p>No Cancel button, closes after 4 seconds</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showLoading('Cancel')">
+          <ion-label>
+            <h2>Loading With Cancel</h2>
+            <p>Cancel or close within 4 seconds</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showLoadingThenSheet()">
+          <ion-label>
+            <h2>Loading Then Sheet</h2>
+            <p>Sheet requested while loading closes</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="dismissLoadingImmediately()">
+          <ion-label>
+            <h2>Dismiss While Presenting</h2>
+            <p>dismissLoading right after showLoading</p>
+          </ion-label>
+        </ion-item>
+        <ion-item button @click="showLoadingAboveBrowser()">
+          <ion-label>
+            <h2>Loading Above Browser</h2>
+            <p>Opens a browser, then the loading sheet</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
       <!-- Bug Fix Tests Section -->
       <ion-list-header>
         <ion-label>Bug Fix Tests</ion-label>
@@ -565,6 +602,61 @@ async function showMultiSelectPreselected() {
     selectedValues: result.values,
     cancelled: result.cancelled
   };
+}
+
+// Loading handlers
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function showLoading(cancelButtonTitle?: string) {
+  const start = Date.now();
+  const closing = wait(4000).then(() => ExtendedDialog.dismissLoading());
+  const result = await ExtendedDialog.showLoading({
+    title: 'Preparing swap',
+    message: 'This can take a moment.',
+    cancelButtonTitle,
+  });
+  await closing;
+  lastResult.value = { type: 'showLoading', cancelled: result.cancelled, settledAfterMs: Date.now() - start };
+}
+
+async function showLoadingThenSheet() {
+  const loading = ExtendedDialog.showLoading({ message: 'Fetching the quote.' });
+  await wait(1500);
+  // Not awaited: the sheet is requested while the loading sheet is still closing.
+  void ExtendedDialog.dismissLoading();
+  const result = await ExtendedDialog.sheet({
+    title: 'Approve',
+    rows: [{ title: 'Expected', value: 'Sheet after loading closes' }],
+  });
+  lastResult.value = {
+    type: 'loadingThenSheet',
+    loadingCancelled: (await loading).cancelled,
+    confirmed: result.confirmed,
+  };
+}
+
+async function dismissLoadingImmediately() {
+  const loading = ExtendedDialog.showLoading({ message: 'Should close by itself.' });
+  void ExtendedDialog.dismissLoading();
+  const result = await ExtendedDialog.sheet({
+    title: 'Approve',
+    rows: [{ title: 'Expected', value: 'Loading did not stick' }],
+  });
+  lastResult.value = {
+    type: 'dismissLoadingImmediately',
+    loadingCancelled: (await loading).cancelled,
+    confirmed: result.confirmed,
+  };
+}
+
+async function showLoadingAboveBrowser() {
+  void Browser.open({ url: 'https://example.com' });
+  await wait(1500);
+  void wait(3000).then(() => ExtendedDialog.dismissLoading());
+  const result = await ExtendedDialog.showLoading({ message: 'Visible above the browser.' });
+  lastResult.value = { type: 'loadingAboveBrowser', cancelled: result.cancelled };
 }
 
 // Bug Fix Test handlers

@@ -29,6 +29,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.shape.ShapeAppearanceModel;
 import java.io.InputStream;
@@ -50,6 +51,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
     private static final String ARG_FULLSCREEN = "fullscreen";
     private static final String ARG_SUBTITLE = "subtitle";
     private static final String ARG_IS_MESSAGE_SHEET = "isMessageSheet";
+    private static final String ARG_IS_LOADING = "isLoading";
 
     private static final Executor IMAGE_EXECUTOR = Executors.newCachedThreadPool();
 
@@ -122,8 +124,40 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         return fragment;
     }
 
+    public static SheetBottomDialogFragment newLoadingInstance(
+        String title,
+        String message,
+        String cancelButton,
+        DialogStyleOptions styleOptions
+    ) {
+        SheetBottomDialogFragment fragment = new SheetBottomDialogFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_TITLE, title);
+        args.putString(ARG_MESSAGE, message);
+        args.putString(ARG_CANCEL_BUTTON, cancelButton);
+        args.putBoolean(ARG_IS_LOADING, true);
+        if (styleOptions != null) {
+            styleOptions.writeToBundle(args);
+        }
+        fragment.setArguments(args);
+        // Blocks back press, outside taps and swipes when there is no Cancel button.
+        fragment.setCancelable(cancelButton != null);
+        return fragment;
+    }
+
     public void setSheetCallback(ExtendedDialog.SheetCallback callback) {
         this.sheetCallback = callback;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle args = getArguments();
+        // A restored loading sheet has lost its plugin call, so dismissLoading could never close it.
+        if (savedInstanceState != null && args != null && args.getBoolean(ARG_IS_LOADING, false)) {
+            setShowsDialog(false);
+            dismissAllowingStateLoss();
+        }
     }
 
     @NonNull
@@ -155,7 +189,8 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         String rowsJson = args.getString(ARG_ROWS);
         String message = args.getString(ARG_MESSAGE, "");
         String confirmButton = args.getString(ARG_CONFIRM_BUTTON, "Confirm");
-        String cancelButton = args.getString(ARG_CANCEL_BUTTON, "Cancel");
+        boolean isLoading = args.getBoolean(ARG_IS_LOADING, false);
+        String cancelButton = isLoading ? args.getString(ARG_CANCEL_BUTTON) : args.getString(ARG_CANCEL_BUTTON, "Cancel");
         boolean fullscreen = args.getBoolean(ARG_FULLSCREEN, false);
         boolean isMessageSheet = args.getBoolean(ARG_IS_MESSAGE_SHEET, false);
         DialogStyleOptions styleOptions = DialogStyleOptions.readFromBundle(args);
@@ -163,7 +198,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         Context ctx = getThemedContext();
         float density = getResources().getDisplayMetrics().density;
         int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        int initialRootHeight = fullscreen ? screenHeight : (int) (screenHeight * 0.5f);
+        int initialRootHeight = isLoading ? ViewGroup.LayoutParams.WRAP_CONTENT : (fullscreen ? screenHeight : (int) (screenHeight * 0.5f));
 
         // Root layout
         rootLayout = new LinearLayout(ctx);
@@ -185,7 +220,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         }
 
         // Drag handle (only shown in basic/non-fullscreen mode)
-        if (!fullscreen) {
+        if (!fullscreen && (!isLoading || cancelButton != null)) {
             View dragHandle = new View(ctx);
             int handleWidth = (int) (32 * density);
             int handleHeight = (int) (4 * density);
@@ -298,7 +333,11 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         // ScrollView for body content (rows/message only)
         scrollView = new ScrollView(ctx);
         scrollView.setFillViewport(true);
-        scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        scrollView.setLayoutParams(
+            isLoading
+                ? new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                : new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
+        );
 
         bodyLayout = new LinearLayout(ctx);
         bodyLayout.setOrientation(LinearLayout.VERTICAL);
@@ -341,8 +380,34 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             bodyLayout.addView(messageContainer);
         }
 
+        if (isLoading) {
+            bodyLayout.setGravity(Gravity.CENTER_HORIZONTAL);
+
+            CircularProgressIndicator spinner = new CircularProgressIndicator(ctx);
+            spinner.setIndeterminate(true);
+            if (styleOptions.getButtonColor() != null) {
+                spinner.setIndicatorColor(styleOptions.getButtonColor());
+            }
+            bodyLayout.addView(spinner);
+
+            TextView loadingMessage = new TextView(ctx);
+            loadingMessage.setText(message);
+            TextViewCompat.setTextAppearance(loadingMessage, com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            loadingMessage.setTextColor(
+                styleOptions.getMessageColor() != null
+                    ? styleOptions.getMessageColor()
+                    : MaterialColors.getColor(ctx, android.R.attr.textColorSecondary, 0xFF49454F)
+            );
+            if (styleOptions.getMessageFontSize() != null) {
+                loadingMessage.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getMessageFontSize());
+            }
+            loadingMessage.setGravity(Gravity.CENTER);
+            loadingMessage.setPadding(0, (int) (16 * density), 0, 0);
+            bodyLayout.addView(loadingMessage);
+        }
+
         // Rows
-        if (!isMessageSheet && rowsJson != null) {
+        if (!isLoading && !isMessageSheet && rowsJson != null) {
             try {
                 JSONArray rows = new JSONArray(rowsJson);
                 for (int i = 0; i < rows.length(); i++) {
@@ -412,6 +477,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
         if (styleOptions.getButtonFontSize() != null) {
             confirmBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, styleOptions.getButtonFontSize());
         }
+        confirmBtn.setVisibility(isLoading ? View.GONE : View.VISIBLE);
         LinearLayout.LayoutParams confirmParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -443,6 +509,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
             ViewGroup.LayoutParams.WRAP_CONTENT
         );
         cancelBtn.setLayoutParams(cancelParams);
+        cancelBtn.setVisibility(cancelButton != null ? View.VISIBLE : View.GONE);
         buttonContainer.addView(cancelBtn);
 
         rootLayout.addView(buttonContainer);
@@ -456,6 +523,7 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
 
         Bundle args = getArguments();
         boolean fullscreen = args != null && args.getBoolean(ARG_FULLSCREEN, false);
+        boolean isLoading = args != null && args.getBoolean(ARG_IS_LOADING, false);
 
         // Get the bottom sheet view from the dialog
         BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
@@ -468,7 +536,13 @@ public class SheetBottomDialogFragment extends BottomSheetDialogFragment {
 
             BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
 
-            if (fullscreen) {
+            if (isLoading) {
+                // Sized to its content: no upward stops, and no swipe without a Cancel button.
+                behavior.setSkipCollapsed(true);
+                behavior.setHideable(isCancelable());
+                behavior.setDraggable(isCancelable());
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else if (fullscreen) {
                 // Make the bottom sheet fill the entire screen
                 ViewGroup.LayoutParams layoutParams = bottomSheet.getLayoutParams();
                 layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;

@@ -80,6 +80,99 @@ class ExtendedDialogTests: XCTestCase {
         plugin.finishDismissals()
     }
 
+    func testDismissLoadingSettlesAndNextDialogWaitsForClose() async {
+        let plugin = DeferredDismissalPlugin()
+        var loadingResults: [Bool] = []
+        var sheetPresented = false
+        let loading = makeLoadingCall("loading") { loadingResults.append($0) }
+
+        plugin.presentDialog(loading, cancelResult: ["cancelled": false]) { _ in }
+        await flushMainQueue()
+        plugin.finishDismissals()
+
+        plugin.dismissLoading(makeDismissCall())
+        plugin.presentDialog(makeCall("sheet") { _ in }, cancelResult: ["value": false]) { _ in sheetPresented = true }
+        await flushMainQueue()
+
+        XCTAssertEqual(loadingResults, [false])
+        XCTAssertFalse(sheetPresented, "Must wait for the loading sheet to finish closing")
+
+        plugin.finishDismissals()
+        XCTAssertTrue(sheetPresented)
+    }
+
+    func testDismissLoadingCancelsQueuedLoading() async {
+        let plugin = DeferredDismissalPlugin()
+        var results: [Bool] = []
+        var loadingPresented = false
+        let first = makeCall("first") { _ in }
+        let loading = makeLoadingCall("loading") { results.append($0) }
+
+        plugin.presentDialog(first, cancelResult: ["value": false]) { _ in }
+        await flushMainQueue()
+        plugin.finishDismissals()
+
+        plugin.presentDialog(loading, cancelResult: ["cancelled": false]) { _ in loadingPresented = true }
+        await flushMainQueue()
+        plugin.dismissLoading(makeDismissCall())
+        await flushMainQueue()
+        plugin.finishDismissals()
+
+        XCTAssertEqual(results, [false])
+        XCTAssertFalse(loadingPresented)
+    }
+
+    func testDismissLoadingLeavesOtherDialogsOpen() async {
+        let plugin = DeferredDismissalPlugin()
+        var results: [Bool] = []
+        let sheet = makeCall("sheet") { results.append($0) }
+
+        plugin.presentDialog(sheet, cancelResult: ["value": false]) { _ in }
+        await flushMainQueue()
+        plugin.finishDismissals()
+
+        plugin.dismissLoading(makeDismissCall())
+        plugin.dismissLoading(makeDismissCall())
+        await flushMainQueue()
+
+        XCTAssertEqual(results, [])
+        XCTAssertEqual(plugin.pendingDismissals, 0)
+    }
+
+    func testUserCancelReportsCancelledAndLateDismissIsNoOp() async {
+        let plugin = DeferredDismissalPlugin()
+        var results: [Bool] = []
+        var done: (([String: Any]) -> Void)?
+        let loading = makeLoadingCall("loading") { results.append($0) }
+
+        plugin.presentDialog(loading, cancelResult: ["cancelled": false]) { done = $0 }
+        await flushMainQueue()
+        plugin.finishDismissals()
+
+        done?(["cancelled": true])
+        plugin.dismissLoading(makeDismissCall())
+        await flushMainQueue()
+
+        XCTAssertEqual(results, [true])
+    }
+
+    private func makeLoadingCall(_ callbackId: String, resolve: @escaping (Bool) -> Void) -> CAPPluginCall {
+        return CAPPluginCall(callbackId: callbackId, methodName: "showLoading", options: [:], success: { result, _ in
+            guard let cancelled = result?.data?["cancelled"] as? Bool else {
+                return XCTFail("Expected a loading result")
+            }
+            resolve(cancelled)
+        }, error: { error in
+            XCTFail("Unexpected rejection: \(String(describing: error))")
+        })
+    }
+
+    private func makeDismissCall() -> CAPPluginCall {
+        return CAPPluginCall(callbackId: UUID().uuidString, methodName: "dismissLoading", options: [:], success: { _, _ in }, error: { error in
+            XCTFail("Unexpected rejection: \(String(describing: error))")
+        })
+    }
+
     private func makeCall(_ callbackId: String, timeout: Double? = nil, resolve: @escaping (Bool) -> Void) -> CAPPluginCall {
         var options: [String: Any] = [:]
         if let timeout = timeout { options["timeout"] = timeout }
@@ -106,6 +199,8 @@ private class DeferredDismissalPlugin: ExtendedDialogPlugin {
     override func closePresentedDialog(then next: @escaping () -> Void) {
         completions.append(next)
     }
+
+    var pendingDismissals: Int { completions.count }
 
     func finishDismissals() {
         while !completions.isEmpty { completions.removeFirst()() }

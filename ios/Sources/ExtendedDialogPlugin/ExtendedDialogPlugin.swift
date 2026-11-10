@@ -12,8 +12,18 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "singleSelect", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "multiSelect", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sheet", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "messageSheet", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "messageSheet", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "showLoading", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "dismissLoading", returnType: CAPPluginReturnPromise)
     ]
+
+    private static let loadingMethod = "showLoading"
+
+    private struct PendingDialog {
+        let isLoading: Bool
+        let present: () -> Void
+        let cancel: () -> Void
+    }
 
     private let implementation = ExtendedDialog()
 
@@ -21,13 +31,14 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
     // one, which settles with its cancel result. Only touched on the main thread.
     private var activeCall: CAPPluginCall?
     private var activeCancelResult: [String: Any] = [:]
-    private var pendingDialog: (present: () -> Void, cancel: () -> Void)?
+    private var pendingDialog: PendingDialog?
     private var isDismissing = false
 
     func presentDialog(_ call: CAPPluginCall, cancelResult: [String: Any], show: @escaping (@escaping ([String: Any]) -> Void) -> Void) {
         DispatchQueue.main.async {
             self.pendingDialog?.cancel()
-            self.pendingDialog = (
+            self.pendingDialog = PendingDialog(
+                isLoading: call.methodName == Self.loadingMethod,
                 present: {
                     let callbackId = call.callbackId!
                     self.activeCall = call
@@ -43,15 +54,19 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
                 },
                 cancel: { call.resolve(cancelResult) }
             )
-            // Competing dismissal completions can otherwise overwrite an unresolved call.
-            guard !self.isDismissing else { return }
-            self.isDismissing = true
-            self.dismissActive {
-                self.isDismissing = false
-                let pending = self.pendingDialog
-                self.pendingDialog = nil
-                pending?.present()
-            }
+            self.closeActiveThenPresentPending()
+        }
+    }
+
+    private func closeActiveThenPresentPending() {
+        // Competing dismissal completions can otherwise overwrite an unresolved call.
+        guard !isDismissing else { return }
+        isDismissing = true
+        dismissActive {
+            self.isDismissing = false
+            let pending = self.pendingDialog
+            self.pendingDialog = nil
+            pending?.present()
         }
     }
 
@@ -69,6 +84,10 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     func closePresentedDialog(then next: @escaping () -> Void) {
+        // A dismiss sent before the presentation finishes is dropped and the dialog stays up.
+        if implementation.waitForPresentation(then: { self.closePresentedDialog(then: next) }) {
+            return
+        }
         guard let dialog = implementation.presentedDialog, dialog.presentingViewController != nil else {
             return next()
         }
@@ -315,6 +334,42 @@ public class ExtendedDialogPlugin: CAPPlugin, CAPBridgedPlugin {
             ) { confirmed in
                 done(["confirmed": confirmed])
             }
+        }
+    }
+
+    @objc func showLoading(_ call: CAPPluginCall) {
+        guard let message = call.getString("message") else {
+            call.reject("message is required")
+            return
+        }
+        let title = call.getString("title")
+        let cancelButtonTitle = call.getString("cancelButtonTitle")
+        let styleOptions = extractStyleOptions(call)
+
+        // The cancel result covers every close the user did not ask for.
+        presentDialog(call, cancelResult: ["cancelled": false]) { done in
+            self.implementation.showLoading(
+                title: title,
+                message: message,
+                cancelButtonTitle: cancelButtonTitle,
+                styleOptions: styleOptions
+            ) {
+                done(["cancelled": true])
+            }
+        }
+    }
+
+    @objc func dismissLoading(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if self.pendingDialog?.isLoading == true {
+                self.pendingDialog?.cancel()
+                self.pendingDialog = nil
+            }
+            // Same path as a replacement, so a dialog requested next waits for this close.
+            if self.activeCall?.methodName == Self.loadingMethod {
+                self.closeActiveThenPresentPending()
+            }
+            call.resolve()
         }
     }
 }

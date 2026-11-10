@@ -27,6 +27,8 @@ npx cap sync
 * [`multiSelect(...)`](#multiselect)
 * [`sheet(...)`](#sheet)
 * [`messageSheet(...)`](#messagesheet)
+* [`showLoading(...)`](#showloading)
+* [`dismissLoading()`](#dismissloading)
 * [Interfaces](#interfaces)
 * [Type Aliases](#type-aliases)
 
@@ -148,6 +150,40 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`options`** | <code><a href="#messagesheetoptions">MessageSheetOptions</a></code> | - Message sheet configuration options. |
 
 **Returns:** <code>Promise&lt;<a href="#messagesheetresult">MessageSheetResult</a>&gt;</code>
+
+--------------------
+
+
+### showLoading(...)
+
+```typescript
+showLoading(options: LoadingOptions) => Promise<LoadingResult>
+```
+
+Show a sheet with a spinner while the app waits for something.
+Only one dialog is shown at a time: showing another one closes this sheet.
+
+The sheet is native and survives a webview reload. Call `dismissLoading` at app start
+so a sheet without a Cancel button can't stay over the reloaded page.
+
+| Param         | Type                                                      | Description                            |
+| ------------- | --------------------------------------------------------- | -------------------------------------- |
+| **`options`** | <code><a href="#loadingoptions">LoadingOptions</a></code> | - Loading sheet configuration options. |
+
+**Returns:** <code>Promise&lt;<a href="#loadingresult">LoadingResult</a>&gt;</code>
+
+--------------------
+
+
+### dismissLoading()
+
+```typescript
+dismissLoading() => Promise<void>
+```
+
+Close the current loading sheet. Does nothing if none is showing, so it is safe to call twice,
+and it never closes other dialogs. Resolves without waiting for the close animation:
+a dialog requested right after is shown once the sheet has gone.
 
 --------------------
 
@@ -289,6 +325,22 @@ Show a message sheet dialog with an optional header logo, title, and message.
 | **`cancelButtonTitle`**  | <code>string</code>                               | Cancel button title                                                                                                                                                                                                                                               |
 | **`mode`**               | <code><a href="#dialogmode">DialogMode</a></code> | Dialog mode                                                                                                                                                                                                                                                       |
 | **`timeout`**            | <code>number</code>                               | Close the dialog after this many milliseconds. It settles with its cancel result. Only one dialog is shown at a time: showing another one closes this one the same way. Ignored by the web `alert`, `confirm` and `prompt` fallbacks, which block until answered. |
+
+
+#### LoadingResult
+
+| Prop            | Type                 | Description                                                                                                                                |
+| --------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`cancelled`** | <code>boolean</code> | `true` if the user tapped Cancel or dismissed the sheet. `false` if the app closed it, with `dismissLoading` or by showing another dialog. |
+
+
+#### LoadingOptions
+
+| Prop                    | Type                | Description                                                                                       |
+| ----------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| **`title`**             | <code>string</code> | Title displayed above the spinner.                                                                |
+| **`message`**           | <code>string</code> | Message displayed below the spinner.                                                              |
+| **`cancelButtonTitle`** | <code>string</code> | Title for the cancel button. Without it there is no button and the user cannot dismiss the sheet. |
 
 
 ### Type Aliases

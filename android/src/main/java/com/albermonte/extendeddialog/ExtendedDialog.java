@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -178,6 +179,10 @@ public class ExtendedDialog {
 
     public interface SheetCallback {
         void onResult(boolean confirmed);
+    }
+
+    public interface LoadingCallback {
+        void onResult(boolean cancelled);
     }
 
     public void showAlert(
@@ -825,6 +830,39 @@ public class ExtendedDialog {
             );
             fragment.setSheetCallback(callback);
             fragment.show(fragmentActivity.getSupportFragmentManager(), "message_sheet");
+            dismissCurrent = fragment::dismissAllowingStateLoss;
+        });
+    }
+
+    public void showLoading(
+        Activity activity,
+        String title,
+        String message,
+        String cancelButtonTitle,
+        DialogStyleOptions styleOptions,
+        LoadingCallback callback
+    ) {
+        if (!(activity instanceof FragmentActivity)) {
+            callback.onResult(false);
+            return;
+        }
+        FragmentActivity fragmentActivity = (FragmentActivity) activity;
+        fragmentActivity.runOnUiThread(() -> {
+            FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
+            // Committing after onSaveInstanceState throws.
+            if (fragmentManager.isStateSaved()) {
+                callback.onResult(false);
+                return;
+            }
+            SheetBottomDialogFragment fragment = SheetBottomDialogFragment.newLoadingInstance(
+                title,
+                message,
+                cancelButtonTitle,
+                styleOptions
+            );
+            fragment.setSheetCallback((confirmed) -> callback.onResult(true));
+            // Synchronous, so a dismissLoading right after finds an attached fragment to remove.
+            fragment.showNow(fragmentManager, "loading_sheet");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
