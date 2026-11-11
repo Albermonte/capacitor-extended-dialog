@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.widget.TextViewCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import com.google.android.material.color.MaterialColors;
@@ -157,6 +158,13 @@ public class ExtendedDialog {
         }
     }
 
+    // DialogFragment.show() throws once the activity saved its state, and JS keeps
+    // running in the background. Allowing state loss keeps the call pending: the
+    // dialog shows when the activity starts again.
+    private static void showFragment(FragmentManager fragmentManager, DialogFragment fragment, String tag) {
+        fragmentManager.beginTransaction().add(fragment, tag).commitAllowingStateLoss();
+    }
+
     public interface AlertCallback {
         void onDismiss();
     }
@@ -252,7 +260,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setAlertCallback(callback);
-            fragment.show(activity.getSupportFragmentManager(), "fullscreen_alert");
+            showFragment(activity.getSupportFragmentManager(), fragment, "fullscreen_alert");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
@@ -330,7 +338,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setConfirmCallback(callback);
-            fragment.show(activity.getSupportFragmentManager(), "fullscreen_confirm");
+            showFragment(activity.getSupportFragmentManager(), fragment, "fullscreen_confirm");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
@@ -470,7 +478,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setPromptCallback(callback);
-            fragment.show(activity.getSupportFragmentManager(), "fullscreen_prompt");
+            showFragment(activity.getSupportFragmentManager(), fragment, "fullscreen_prompt");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
@@ -611,7 +619,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setSingleSelectCallback(callback);
-            fragment.show(activity.getSupportFragmentManager(), "fullscreen_single_select");
+            showFragment(activity.getSupportFragmentManager(), fragment, "fullscreen_single_select");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
@@ -759,7 +767,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setMultiSelectCallback(callback);
-            fragment.show(activity.getSupportFragmentManager(), "fullscreen_multi_select");
+            showFragment(activity.getSupportFragmentManager(), fragment, "fullscreen_multi_select");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
@@ -795,7 +803,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setSheetCallback(callback);
-            fragment.show(fragmentActivity.getSupportFragmentManager(), "bottom_sheet");
+            showFragment(fragmentActivity.getSupportFragmentManager(), fragment, "bottom_sheet");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
@@ -829,7 +837,7 @@ public class ExtendedDialog {
                 styleOptions
             );
             fragment.setSheetCallback(callback);
-            fragment.show(fragmentActivity.getSupportFragmentManager(), "message_sheet");
+            showFragment(fragmentActivity.getSupportFragmentManager(), fragment, "message_sheet");
             dismissCurrent = fragment::dismissAllowingStateLoss;
         });
     }
