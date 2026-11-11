@@ -15,6 +15,8 @@ import org.json.JSONObject;
 @CapacitorPlugin(name = "ExtendedDialog")
 public class ExtendedDialogPlugin extends Plugin {
 
+    private static final String LOADING_METHOD = "showLoading";
+
     private final ExtendedDialog implementation = new ExtendedDialog();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -368,5 +370,37 @@ public class ExtendedDialogPlugin extends Plugin {
                 }
             )
         );
+    }
+
+    @PluginMethod
+    public void showLoading(PluginCall call) {
+        String title = call.getString("title");
+        String message = call.getString("message");
+        String cancelButtonTitle = call.getString("cancelButtonTitle");
+        DialogStyleOptions styleOptions = extractStyleOptions(call);
+
+        if (message == null) {
+            call.reject("message is required");
+            return;
+        }
+
+        // The cancel result covers every close the user did not ask for.
+        presentDialog(call, new JSObject().put("cancelled", false), (done) ->
+            implementation.showLoading(getActivity(), title, message, cancelButtonTitle, styleOptions, (cancelled) -> {
+                JSObject result = new JSObject();
+                result.put("cancelled", cancelled);
+                done.resolve(result);
+            })
+        );
+    }
+
+    @PluginMethod
+    public void dismissLoading(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            if (activeCall != null && LOADING_METHOD.equals(activeCall.getMethodName())) {
+                dismissActive();
+            }
+            call.resolve();
+        });
     }
 }

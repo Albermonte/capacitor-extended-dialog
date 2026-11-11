@@ -353,6 +353,29 @@ export interface MessageSheetResult {
   confirmed: boolean;
 }
 
+export interface LoadingOptions extends DialogStyleOptions {
+  /**
+   * Title displayed above the spinner.
+   */
+  title?: string;
+  /**
+   * Message displayed below the spinner.
+   */
+  message: string;
+  /**
+   * Title for the cancel button. Without it there is no button and the user cannot dismiss the sheet.
+   */
+  cancelButtonTitle?: string;
+}
+
+export interface LoadingResult {
+  /**
+   * `true` if the user tapped Cancel or dismissed the sheet. `false` if the app closed it,
+   * with `dismissLoading` or by showing another dialog.
+   */
+  cancelled: boolean;
+}
+
 export interface ExtendedDialogPlugin {
   /**
    * Show an alert dialog with a single dismiss button.
@@ -403,4 +426,21 @@ export interface ExtendedDialogPlugin {
    * @returns Whether the user confirmed or cancelled the sheet.
    */
   messageSheet(options: MessageSheetOptions): Promise<MessageSheetResult>;
+  /**
+   * Show a sheet with a spinner while the app waits for something.
+   * Only one dialog is shown at a time: showing another one closes this sheet.
+   *
+   * The sheet is native and survives a webview reload. Call `dismissLoading` at app start
+   * so a sheet without a Cancel button can't stay over the reloaded page.
+   *
+   * @param options - Loading sheet configuration options.
+   * @returns When the sheet goes away, whether the user cancelled it.
+   */
+  showLoading(options: LoadingOptions): Promise<LoadingResult>;
+  /**
+   * Close the current loading sheet. Does nothing if none is showing, so it is safe to call twice,
+   * and it never closes other dialogs. Resolves without waiting for the close animation:
+   * a dialog requested right after is shown once the sheet has gone.
+   */
+  dismissLoading(): Promise<void>;
 }

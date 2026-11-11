@@ -525,10 +525,69 @@ public struct DialogStyleOptions {
         presentFullScreen(vc)
     }
 
+    // MARK: - Loading
+
+    public func showLoading(
+        title: String?,
+        message: String,
+        cancelButtonTitle: String?,
+        styleOptions: DialogStyleOptions? = nil,
+        callback: @escaping AlertCallback
+    ) {
+        onMain {
+            let dialog = FullScreenDialogViewController(
+                dialogType: .loading,
+                dialogTitle: title,
+                message: message,
+                okButtonTitle: "",
+                cancelButtonTitle: cancelButtonTitle,
+                inputPlaceholder: nil,
+                inputText: nil,
+                options: nil,
+                selectedValue: nil,
+                selectedValues: nil,
+                styleOptions: styleOptions
+            )
+            dialog.sheetCallback = { _ in callback() }
+            dialog.isModalInPresentation = cancelButtonTitle == nil
+            self.presentBasicSheet(dialog, resizable: false)
+        }
+    }
+
     // MARK: - Helpers
 
     /// Last dialog this instance presented, so the plugin can close it.
     public private(set) weak var presentedDialog: UIViewController?
+
+    private var dialogBeingPresented: UIViewController?
+    private var afterPresentation: [() -> Void] = []
+
+    /// Runs `block` when the presentation in flight ends. Returns false if there is none.
+    func waitForPresentation(then block: @escaping () -> Void) -> Bool {
+        guard dialogBeingPresented != nil else { return false }
+        afterPresentation.append(block)
+        return true
+    }
+
+    private func present(_ dialog: UIViewController, from presenter: UIViewController) {
+        presentedDialog = dialog
+        dialogBeingPresented = dialog
+        presenter.present(dialog, animated: true) { [weak self, weak dialog] in
+            self?.finishPresentation(of: dialog)
+        }
+        // UIKit never calls the completion of a presentation it refuses.
+        if dialog.presentingViewController == nil {
+            finishPresentation(of: dialog)
+        }
+    }
+
+    private func finishPresentation(of dialog: UIViewController?) {
+        guard dialog != nil, dialog === dialogBeingPresented else { return }
+        dialogBeingPresented = nil
+        let blocks = afterPresentation
+        afterPresentation = []
+        blocks.forEach { $0() }
+    }
 
     // Present synchronously when already on main, so `presentedDialog` is set
     // before the plugin handles the next dialog.
@@ -587,8 +646,7 @@ public struct DialogStyleOptions {
             popover.permittedArrowDirections = []
         }
 
-        presentedDialog = alert
-        viewController.present(alert, animated: true)
+        present(alert, from: viewController)
     }
 
     private func presentFullScreen(_ viewController: UIViewController) {
@@ -596,11 +654,10 @@ public struct DialogStyleOptions {
 
         viewController.modalPresentationStyle = .fullScreen
         viewController.modalTransitionStyle = .coverVertical
-        presentedDialog = viewController
-        topVC.present(viewController, animated: true)
+        present(viewController, from: topVC)
     }
 
-    private func presentBasicSheet(_ viewController: UIViewController) {
+    private func presentBasicSheet(_ viewController: UIViewController, resizable: Bool = true) {
         guard let topVC = getTopViewController() else { return }
 
         viewController.modalPresentationStyle = .pageSheet
@@ -620,21 +677,20 @@ public struct DialogStyleOptions {
                     }
                     return maxHeight
                 }
-                sheet.detents = [customDetent, .large()]
-                sheet.prefersGrabberVisible = true
+                sheet.detents = resizable ? [customDetent, .large()] : [customDetent]
+                sheet.prefersGrabberVisible = resizable
                 sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             }
         } else if #available(iOS 15.0, *) {
             if let sheet = viewController.sheetPresentationController {
                 // Fallback for iOS 15: use large detent to ensure content is visible
-                sheet.detents = [.large()]
-                sheet.prefersGrabberVisible = true
+                sheet.detents = resizable ? [.large()] : [.medium()]
+                sheet.prefersGrabberVisible = resizable
                 sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             }
         }
 
-        presentedDialog = viewController
-        topVC.present(viewController, animated: true)
+        present(viewController, from: topVC)
     }
 
     private func getTopViewController() -> UIViewController? {
