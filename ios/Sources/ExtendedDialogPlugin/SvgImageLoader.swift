@@ -62,9 +62,21 @@ enum SvgImageLoader {
 
     private static func render(data: Data, targetSize: CGSize) -> UIImage? {
         guard let svgImage = SVGKImage(data: data) else { return nil }
-        if targetSize.width > 0 && targetSize.height > 0 && svgImage.size != targetSize {
+        guard targetSize.width > 0, targetSize.height > 0 else { return svgImage.uiImage }
+        let intrinsic = svgImage.size
+        // No viewBox and no usable width/height: intrinsic is (-1, -1) and uiImage would be nil.
+        guard intrinsic.width > 0, intrinsic.height > 0 else {
             svgImage.size = targetSize
+            return svgImage.uiImage
         }
-        return svgImage.uiImage
+        if intrinsic == targetSize { return svgImage.uiImage }
+        // SVGKit's `size` setter ignores a non-zero viewBox origin (e.g. "-4 -4 108 108"),
+        // shifting and zooming the drawing. Scale the intrinsic-size layer tree instead.
+        let scale = min(targetSize.width / intrinsic.width, targetSize.height / intrinsic.height)
+        let drawSize = CGSize(width: intrinsic.width * scale, height: intrinsic.height * scale)
+        return UIGraphicsImageRenderer(size: drawSize).image { ctx in
+            ctx.cgContext.scaleBy(x: scale, y: scale)
+            svgImage.caLayerTree.render(in: ctx.cgContext)
+        }
     }
 }
